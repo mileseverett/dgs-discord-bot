@@ -19,30 +19,36 @@ def loadPickle(fname):
         print (data)
     return data
 
-def attemptVouch(name,amount,vouches):
+def attemptVouch(name,amount,vouches,flipModifier):
     print ("attempting to vouch")
     if name in vouches.keys():
-        vouches[name]["vouches"] = max(vouches[name]["vouches"] + amount,0)
+        vouches[name]["vouches"] = max(vouches[name]["vouches"] + amount * flipModifier,0)
     else:
         print ("no vouches")
-        vouches[name] = {"vouches":max(amount,0),"vouchers":[],"antivouchers":[]}   
+        vouches[name] = {"vouches":max(amount * flipModifier,0),"vouchers":[],"antivouchers":[]}   
     print ("vouch successful")    
     return vouches
 
-def vouchValue(roles,user,vouches,voucher,antimodifier):
+def vouchValue(roles,user,vouches,voucher,antiModifier,flipModifier):
     print ("roles",roles)
     print ("user",user)
     print ("vouches",vouches)
-    print ("antimod",antimodifier)
+    print ("antimod",antiModifier)
     if "Floorgazer" in roles:
-        vouches = attemptVouch(user,3*antimodifier,vouches)
+        vouches = attemptVouch(user,3*antiModifier,vouches,flipModifier)
     elif "Keyer" in roles:
-        vouches = attemptVouch(user,2*antimodifier,vouches)
+        vouches = attemptVouch(user,2*antiModifier,vouches,flipModifier)
     elif "Wingman" in roles:
-        vouches = attemptVouch(user,1*antimodifier,vouches)
+        vouches = attemptVouch(user,1*antiModifier,vouches,flipModifier)
     print ("after vouches",vouches)
     print ("vouched")
     return vouches
+
+def getRoles(ctx):
+    roles = []
+    for x in ctx.author.roles:
+        roles.append(x.name)
+    return roles
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -58,6 +64,7 @@ async def nine_nine(ctx):
 @commands.has_any_role("Floorgazer","Keyer","Wingman")
 async def vouch(ctx, user:str):
     user = user.lower()
+    antiModifier = 1
     try:
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
 
@@ -66,9 +73,8 @@ async def vouch(ctx, user:str):
         else: 
             vouches = {}
 
-        roles = []
-        for x in ctx.author.roles:
-            roles.append(x.name)
+        roles = getRoles(ctx)
+
         try:  
             if ctx.author.name in vouches[user]["vouchers"]:
                 await ctx.send("Already vouched")
@@ -76,14 +82,22 @@ async def vouch(ctx, user:str):
         except:
             pass
 
+        try:
+            if ctx.author.name in vouches[user]["antivouchers"]:
+                antiModifier = 2
+        except: 
+            pass
+
         authorName = ctx.author.name
-        vouches = vouchValue(roles,user,vouches,authorName,1)
+        vouches = vouchValue(roles,user,vouches,authorName,1,antiModifier)
         try:
             vouches[user]["antivouchers"].remove(authorName)
         except:
             pass
         vouches[user]["vouchers"].append(authorName)
+
         dumpPickle(fname,vouches)
+
         print ("vouch complete:",vouches)
         await ctx.send("Vouched " + user + ". They are now on " + str(vouches[user]["vouches"]))
     except Exception as e:
@@ -93,6 +107,7 @@ async def vouch(ctx, user:str):
 @commands.has_any_role("Floorgazer","Keyer","Wingman")
 async def antivouch(ctx, user:str):
     user = user.lower()
+    antiModifier = 1
     try:
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
         if os.path.exists(fname):
@@ -100,9 +115,9 @@ async def antivouch(ctx, user:str):
         else: 
             vouches = {}
         print ("loaded vouches",vouches)
-        roles = []
-        for x in ctx.author.roles:
-            roles.append(x.name)
+
+        roles = getRoles(ctx)
+
         try:
             if ctx.author.name in vouches[user]["antivouchers"]:
                 await ctx.send("Already antivouched")
@@ -110,8 +125,15 @@ async def antivouch(ctx, user:str):
         except:
             pass
 
+        #checks if this user previously vouched them
+        try:
+            if ctx.author.name in vouches[user]["vouchers"]:
+                antiModifier = 2
+        except: 
+            pass
+        
         authorName = ctx.author.name
-        vouches = vouchValue(roles,user,vouches,authorName,-1)
+        vouches = vouchValue(roles,user,vouches,authorName,-1,antiModifier)
 
         try:
             vouches[user]["vouchers"].remove(authorName)
@@ -131,7 +153,7 @@ async def antivouch(ctx, user:str):
         print (e)
 
 @bot.command(name="vouchinfo")
-@commands.has_any_role("Floorgazer","Keyer","Wingman")
+@commands.has_any_role("Floorgazer","Keyer","Wingman","3s","2s","1s")
 async def vouchInfo(ctx, user:str):
 
     fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
@@ -141,17 +163,22 @@ async def vouchInfo(ctx, user:str):
         await ctx.send("No vouches have been made on this server yet.")
     
     user = user.lower()
-   
+    roles = getRoles(ctx)
     try:
         embed=discord.Embed()
         embed.add_field(name="Vouches", value=vouches[user]["vouches"], inline=False)
         vouchers = ", ".join(vouches[user]["vouchers"])
-        embed.add_field(name="Vouchers", value=vouchers, inline=False)
-        if len(vouches[user]["antivouchers"]) > 0:
-            antivouchers = ", ".join(vouches[user]["antivouchers"])
+
+        #display vouch info only to ranks
+        if "Floorgazer" in roles or "Keyer" in roles or "Wingman" in roles:
+            embed.add_field(name="Vouchers", value=vouchers, inline=False)
+            if len(vouches[user]["antivouchers"]) > 0:
+                antivouchers = ", ".join(vouches[user]["antivouchers"])
+            else:
+                antivouchers = "None"
+            embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
         else:
-            antivouchers = "None"
-        embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
+            pass
 
         await ctx.send(embed=embed)
     except Exception as e:
@@ -160,7 +187,7 @@ async def vouchInfo(ctx, user:str):
 
 @bot.command(name="findall")
 @commands.has_any_role("Floorgazer","Keyer","Wingman")
-async def vouchInfo(ctx):
+async def findAll(ctx):
     for x in ctx.guild.members:      
         roles = []
         print (type(x))
