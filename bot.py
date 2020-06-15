@@ -192,6 +192,7 @@ async def vouchInfo(ctx, user:str):
 
 
         print (user)
+        print (user)
         #display vouch info only to ranks
         if "Floorgazer" in roles or "Keyer" in roles or "Wingman" in roles:
             
