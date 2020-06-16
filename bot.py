@@ -38,7 +38,7 @@ def vouchValue(roles):
         value = 3
     elif "Keyer" in roles:
         value = 2
-    elif "Wingman" in roles:
+    elif "Wingman" in roles or "Wingwoman" in roles:
         value = 1
     return value
 
@@ -65,7 +65,7 @@ async def nine_nine(ctx):
     await ctx.send(response)
 
 @bot.command(name="vouch")
-@commands.has_any_role("Floorgazer","Keyer","Wingman")
+@commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
 async def vouch(ctx, user:str, *argv):
     user = user.lower()
     antiModifier = 0
@@ -134,12 +134,12 @@ async def vouch(ctx, user:str, *argv):
         dumpPickle(fname,vouches)
 
         print ("vouch complete:",vouches)
-        await ctx.send(vouchType + " " + user + ". They are now on " + str(vouches[user]["vouches"]))
+        await ctx.send(vouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
     except Exception as e:
         print (e)
 
 @bot.command(name="antivouch")
-@commands.has_any_role("Floorgazer","Keyer","Wingman")
+@commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
 async def antivouch(ctx, user:str,*argv):
     user = user.lower()
     antiModifier = 0
@@ -207,12 +207,12 @@ async def antivouch(ctx, user:str,*argv):
 
         dumpPickle(fname,vouches)
         print ("antivouch complete:",vouches)
-        await ctx.send(antivouchType + " " + user + ". They are now on " + str(vouches[user]["vouches"]))
+        await ctx.send(antivouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
     except Exception as e:
         print (e)
 
 @bot.command(name="vouchinfo")
-@commands.has_any_role("Floorgazer","Keyer","Wingman","3s","2s","1s")
+@commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman","3s","2s","1s")
 async def vouchInfo(ctx, user:str):
 
     fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
@@ -235,7 +235,7 @@ async def vouchInfo(ctx, user:str):
         }
 
         #display vouch info only to ranks
-        if "Floorgazer" in roles or "Keyer" in roles or "Wingman" in roles:
+        if "Floorgazer" in roles or "Keyer" in roles or "Wingman" in roles or "Wingwoman" in roles:
             
             #create text string with vouchers info
             vouchers = ""
@@ -262,7 +262,7 @@ async def vouchInfo(ctx, user:str):
         await ctx.send("User does not exist")
 
 @bot.command(name="findall")
-@commands.has_any_role("Floorgazer","Keyer","Wingman")
+@commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
 async def findAll(ctx):
     for x in ctx.guild.members:      
         roles = []
