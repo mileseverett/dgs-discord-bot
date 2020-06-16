@@ -200,6 +200,7 @@ async def antivouch(ctx, user:str,*argv):
             antivouchType = "Antivouch"
         
         
+        
         try:
             del vouches[user]["vouchers"][authorName]
         except:
@@ -245,36 +246,36 @@ async def vouchInfo(ctx, user:str):
 
         embed.add_field(name="Vouches", value=vouches[user]["vouches"], inline=False)
         
-        #check if channel has been whitelisted
-        if whitelistCheck(ctx) == False:
-            pass
-        else:
-            #create text string with vouchers info
-            vouchers = ""
-            for k,v in sorted(vouches[user]["vouchers"].items()):
-                vouchers = vouchers + vouchDict[v["value"]] + " " + k 
-                if len(v["reason"]) > 0:
-                    vouchers = vouchers + " - " + str(v["reason"]) + "\n"
-                else:
-                    vouchers = vouchers + "\n"
-            sort_vouchers = '\n'.join(sorted(vouchers.split("\n")))
-            embed.add_field(name="Vouchers", value=sort_vouchers, inline=False)
-
-            #if there is antivouchers
-            if len(vouches[user]["antivouchers"]) > 0:
-                antivouchers = ""
-                #create text string with antivouchers info
-                for k,v in sorted(vouches[user]["antivouchers"].items()):
-                    antivouchers = antivouchers + vouchDict[v["value"]] + " " + k
-                    if len(v["reason"]) > 0:
-                        antivouchers = antivouchers + " - " + str(v["reason"]) + "\n"
-                    else:
-                        antivouchers = antivouchers + "\n"
-                antivouchers = '\n'.join(sorted(antivouchers.split("\n")))
+        try:
+            #check if channel has been whitelisted
+            if whitelistCheck(ctx) == False:
+                pass
             else:
-                antivouchers = "None"
-            embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
+                #create text string with vouchers info
+                vouchers = ""
+                for k,v in vouches[user]["vouchers"].items():
+                    vouchers = vouchers + vouchDict[v["value"]] + " " + k 
+                    if len(v["reason"]) > 0:
+                        vouchers = vouchers + " - " + str(v["reason"]) + "\n"
+                    else:
+                        vouchers = vouchers + "\n"
+                embed.add_field(name="Vouchers", value=vouchers, inline=False)
 
+                #if there is antivouchers
+                if len(vouches[user]["antivouchers"]) > 0:
+                    antivouchers = ""
+                    #create text string with antivouchers info
+                    for k,v in vouches[user]["antivouchers"].items():
+                        antivouchers = antivouchers + vouchDict[v["value"]] + " " + k
+                        if len(v["reason"]) > 0:
+                            vouchers = vouchers + " - " + str(v["reason"]) + "\n"
+                        else:
+                            vouchers = vouchers + "\n"
+                else:
+                    antivouchers = "None"
+                embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
+        except:
+            pass
         await ctx.send(embed=embed)
 
     except Exception as e:
