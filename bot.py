@@ -54,6 +54,17 @@ def argvCombiner(argv):
         newString = newString + x + " "
     return newString
 
+def whitelistCheck(ctx):
+    fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".data"
+    settings = loadPickle(fname)
+    print (settings)
+    print (ctx.message.channel.id)
+    if ctx.message.channel.id in settings["whitelistedChannels"]:
+        return True
+    else:
+        return False
+
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
@@ -226,7 +237,6 @@ async def vouchInfo(ctx, user:str):
     try:
         embedTitle = "Vouches for " + string.capwords(user)
         embed=discord.Embed(title=embedTitle)
-        embed.add_field(name="Vouches", value=vouches[user]["vouches"], inline=False)
 
         vouchDict = {
             1:"<:wingman:722167334688784434>",
@@ -234,13 +244,20 @@ async def vouchInfo(ctx, user:str):
             3:"<:floorgazer:722167334667550741>"
         }
 
-        #display vouch info only to ranks
-        if "Floorgazer" in roles or "Keyer" in roles or "Wingman" in roles or "Wingwoman" in roles:
-            
+        embed.add_field(name="Vouches", value=vouches[user]["vouches"], inline=False)
+        
+        #check if channel has been whitelisted
+        if whitelistCheck(ctx) == False:
+            pass
+        else:
             #create text string with vouchers info
             vouchers = ""
             for k,v in vouches[user]["vouchers"].items():
-                vouchers = vouchers + vouchDict[v["value"]] + " " + k + " - " + str(v["reason"]) + "\n"
+                vouchers = vouchers + vouchDict[v["value"]] + " " + k 
+                if len(v["reason"]) > 0:
+                    vouchers = vouchers + " - " + str(v["reason"]) + "\n"
+                else:
+                    vouchers = vouchers + "\n"
             embed.add_field(name="Vouchers", value=vouchers, inline=False)
 
             #if there is antivouchers
@@ -248,12 +265,14 @@ async def vouchInfo(ctx, user:str):
                 antivouchers = ""
                 #create text string with antivouchers info
                 for k,v in vouches[user]["antivouchers"].items():
-                    antivouchers = antivouchers + vouchDict[v["value"]] + " " + k + " - " + str(v["reason"]) + "\n"
+                    antivouchers = antivouchers + vouchDict[v["value"]] + " " + k
+                    if len(v["reason"]) > 0:
+                        vouchers = vouchers + " - " + str(v["reason"]) + "\n"
+                    else:
+                        vouchers = vouchers + "\n"
             else:
                 antivouchers = "None"
             embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
-        else:
-            pass
 
         await ctx.send(embed=embed)
 
@@ -295,9 +314,78 @@ async def count(ctx, number:int):
     for x in range(number):
         await ctx.send(x)
 
+@bot.command(name="contextinfo")
+async def contextInfo(ctx):
+    await ctx.send(ctx.message)
+
+@bot.command(name="whitelistchannel")
+@commands.has_any_role("Admin",":)")
+async def whitelistChannel(ctx):
+    try:
+        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".data"
+
+        if os.path.exists(fname):
+            settings = loadPickle(fname)
+        else: 
+            settings = {}
+
+        if "whitelistedChannels" in settings.keys():
+            settings["whitelistedChannels"].append(ctx.message.channel.id)
+        else:
+            settings["whitelistedChannels"] = []
+            settings["whitelistedChannels"].append(ctx.message.channel.id)
+        
+        print (settings)
+        
+        dumpPickle(fname,settings)
+        await ctx.send("Channel added to the whitelist.")
+    except Exception as e:
+        print (e)
+        
+@bot.command(name="removewhitelistchannel")
+@commands.has_any_role("Admin",":)")
+async def whitelistChannel(ctx):
+    try:
+        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".data"
+
+        if os.path.exists(fname):
+            settings = loadPickle(fname)
+        else: 
+            settings = {}
+
+        #check if any channels have ever been whitelisted
+        if "whitelistedChannels" in settings.keys():
+            #try to remove the channel this message was sent from
+            try:
+                settings["whitelistedChannels"].remove(ctx.message.channel.id)
+            
+            #will throw an error if doesn't exist, so tell user it wasn't ever whitelisted.
+            except Exception as e:
+                await ctx.send("This channel wasn't whitelisted.")
+        #tell user that no channels have ever been whitelisted in this server
+        else:
+            await ctx.send("No channels have ever been whitelisted in this server.")
+
+        print (settings)
+        
+        dumpPickle(fname,settings)
+        await ctx.send("Channel removed from the whitelist.")
+    except Exception as e:
+        print (e)
+
+@bot.command(name="channelcheck")
+@commands.has_any_role("Admin",":)")
+async def channelCheck(ctx):
+    if whitelistCheck(ctx) == True:
+        await ctx.send("Channel is whitelisted")
+    else:
+        await ctx.send("Channel is not whitelisted")
+
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.errors.CheckFailure):
         await ctx.send('You do not have the correct role for this command.')
+
+
 
 bot.run(TOKEN)
