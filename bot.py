@@ -1,10 +1,12 @@
 import os
 import random
 import pickle
+import string
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+
 
 def dumpPickle(fname,data):
     with open(fname, 'wb') as filehandle:
@@ -46,6 +48,12 @@ def getRoles(ctx):
         roles.append(x.name)
     return roles
 
+def argvCombiner(argv):
+    newString = ""
+    for x in argv:
+        newString = newString + x + " "
+    return newString
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
@@ -61,11 +69,8 @@ async def nine_nine(ctx):
 async def vouch(ctx, user:str, *argv):
     user = user.lower()
     antiModifier = 0
-   
-    vouchReason = ""
-    for x in argv:
-        vouchReason = vouchReason + x + " "
-    print (vouchReason)
+    print ("started")
+    vouchReason = argvCombiner(argv)
 
     try:
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
@@ -76,14 +81,20 @@ async def vouch(ctx, user:str, *argv):
             vouches = {}
 
         roles = getRoles(ctx)
+        rankValue = vouchValue(roles)
+
+        try: 
+            prevValue = vouches[user]["vouchers"][ctx.author.name]["value"]
+        except:
+            prevValue = 1000
 
         try:  
-            if ctx.author.name in vouches[user]["vouchers"]:
-                await ctx.send("Already vouched")
+            if ctx.author.name in vouches[user]["vouchers"] and rankValue == vouches[user]["vouchers"][ctx.author.name]["value"]:
+                await ctx.send("Already vouched at current rank value.")
                 return
-        except:
+        except Exception as e:
+            print (e)
             pass
-
         try:
             if ctx.author.name in vouches[user]["antivouchers"]:
                 antiModifier = vouches[user]["antivouchers"][ctx.author.name]["value"]
@@ -91,9 +102,24 @@ async def vouch(ctx, user:str, *argv):
             pass
 
         authorName = ctx.author.name
-        # vouches = vouchValue(roles,user,vouches,authorName,1,antiModifier)
-        rankValue = vouchValue(roles)
-        vouches = attemptVouch(user,rankValue,vouches,antiModifier)
+
+        try:
+            #check if vouch is an update or not
+            print (rankValue,prevValue)
+            if ctx.author.name in vouches[user]["vouchers"] and rankValue > prevValue:
+                print ("update vouch")
+                newRankValue = rankValue - vouches[user]["vouchers"][ctx.author.name]["value"]
+                vouches = attemptVouch(user,newRankValue,vouches,antiModifier)
+                vouchType = "Vouch update"
+            else:
+                print ("new vouch")
+                vouches = attemptVouch(user,rankValue,vouches,antiModifier)
+                vouchType = "Vouch"
+        #case where vouches is empty
+        except:
+            vouches = attemptVouch(user,rankValue,vouches,antiModifier)
+            vouchType = "Vouch"
+
         try:
             del vouches[user]["antivouchers"][authorName]
         except:
@@ -108,7 +134,7 @@ async def vouch(ctx, user:str, *argv):
         dumpPickle(fname,vouches)
 
         print ("vouch complete:",vouches)
-        await ctx.send("Vouched " + user + ". They are now on " + str(vouches[user]["vouches"]))
+        await ctx.send(vouchType + " " + user + ". They are now on " + str(vouches[user]["vouches"]))
     except Exception as e:
         print (e)
 
@@ -118,10 +144,7 @@ async def antivouch(ctx, user:str,*argv):
     user = user.lower()
     antiModifier = 0
 
-    vouchReason = ""
-    for x in argv:
-        vouchReason = vouchReason + x + " "
-    print (vouchReason)
+    vouchReason = argvCombiner(argv)
 
     try:
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
@@ -132,10 +155,15 @@ async def antivouch(ctx, user:str,*argv):
         print ("loaded vouches",vouches)
 
         roles = getRoles(ctx)
-
+        rankValue = vouchValue(roles)
         try:
-            if ctx.author.name in vouches[user]["antivouchers"]:
-                await ctx.send("Already antivouched")
+            print ("rankValue",rankValue,"previousVouch",vouches[user]["antivouchers"][ctx.author.name]["value"])
+        except Exception as e:
+            print (e)
+            pass
+        try:
+            if ctx.author.name in vouches[user]["antivouchers"] and rankValue == vouches[user]["antivouchers"][ctx.author.name]["value"]:
+                await ctx.send("Already antivouched at current rank value.")
                 return
         except:
             pass
@@ -148,8 +176,20 @@ async def antivouch(ctx, user:str,*argv):
             pass
         
         authorName = ctx.author.name
-        rankValue = vouchValue(roles)
-        vouches = attemptVouch(user,rankValue*-1,vouches,antiModifier)
+        
+
+        #updating antivouch
+        if ctx.author.name in vouches[user]["antivouchers"] and rankValue > vouches[user]["antivouchers"][ctx.author.name]["value"]:
+            newRankValue = rankValue - vouches[user]["antivouchers"][ctx.author.name]["value"]
+            vouches = attemptVouch(user,newRankValue*-1,vouches,antiModifier)
+            antivouchType = "Antivouch update"
+        #if user hasn't antivouched before
+        else:
+            vouches = attemptVouch(user,rankValue*-1,vouches,antiModifier)
+            antivouchType = "Antivouch"
+        
+        
+        
         try:
             del vouches[user]["vouchers"][authorName]
         except:
@@ -167,7 +207,7 @@ async def antivouch(ctx, user:str,*argv):
 
         dumpPickle(fname,vouches)
         print ("antivouch complete:",vouches)
-        await ctx.send("Antivouched " + user + ". They are now on " + str(vouches[user]["vouches"]))
+        await ctx.send(antivouchType + " " + user + ". They are now on " + str(vouches[user]["vouches"]))
     except Exception as e:
         print (e)
 
@@ -184,7 +224,7 @@ async def vouchInfo(ctx, user:str):
     user = user.lower()
     roles = getRoles(ctx)
     try:
-        embedTitle = "Vouches for " + user
+        embedTitle = "Vouches for " + string.capwords(user)
         embed=discord.Embed(title=embedTitle)
         embed.add_field(name="Vouches", value=vouches[user]["vouches"], inline=False)
 
