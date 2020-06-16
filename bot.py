@@ -30,22 +30,7 @@ def attemptVouch(name,amount,vouches,flipModifier):
     print ("vouch successful")    
     return vouches
 
-def vouchValue(roles,user,vouches,voucher,antiModifier,flipModifier):
-    print ("roles",roles)
-    print ("user",user)
-    print ("vouches",vouches)
-    print ("antimod",antiModifier)
-    if "Floorgazer" in roles:
-        vouches = attemptVouch(user,rankValue*antiModifier,vouches,flipModifier)
-    elif "Keyer" in roles:
-        vouches = attemptVouch(user,rankValue*antiModifier,vouches,flipModifier)
-    elif "Wingman" in roles:
-        vouches = attemptVouch(user,1*antiModifier,vouches,flipModifier)
-    print ("after vouches",vouches)
-    print ("vouched")
-    return vouches
-
-def returnHighestRole(roles):
+def vouchValue(roles):
     value = 0
     if "Floorgazer" in roles:
         value = 3
@@ -73,9 +58,15 @@ async def nine_nine(ctx):
 
 @bot.command(name="vouch")
 @commands.has_any_role("Floorgazer","Keyer","Wingman")
-async def vouch(ctx, user:str):
+async def vouch(ctx, user:str, *argv):
     user = user.lower()
     antiModifier = 0
+   
+    vouchReason = ""
+    for x in argv:
+        vouchReason = vouchReason + x + " "
+    print (vouchReason)
+
     try:
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
 
@@ -95,20 +86,24 @@ async def vouch(ctx, user:str):
 
         try:
             if ctx.author.name in vouches[user]["antivouchers"]:
-                antiModifier = vouches[user]["antivouchers"][ctx.author.name]
+                antiModifier = vouches[user]["antivouchers"][ctx.author.name]["value"]
         except: 
             pass
 
         authorName = ctx.author.name
         # vouches = vouchValue(roles,user,vouches,authorName,1,antiModifier)
-        rankValue = returnHighestRole(roles)
+        rankValue = vouchValue(roles)
         vouches = attemptVouch(user,rankValue,vouches,antiModifier)
         try:
             del vouches[user]["antivouchers"][authorName]
         except:
             pass
 
-        vouches[user]["vouchers"][authorName] = rankValue
+        vouches[user]["vouchers"][authorName] = {
+            "value":rankValue,
+            "reason":vouchReason[:-1]
+        }
+
 
         dumpPickle(fname,vouches)
 
@@ -119,9 +114,15 @@ async def vouch(ctx, user:str):
 
 @bot.command(name="antivouch")
 @commands.has_any_role("Floorgazer","Keyer","Wingman")
-async def antivouch(ctx, user:str):
+async def antivouch(ctx, user:str,*argv):
     user = user.lower()
     antiModifier = 0
+
+    vouchReason = ""
+    for x in argv:
+        vouchReason = vouchReason + x + " "
+    print (vouchReason)
+
     try:
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
         if os.path.exists(fname):
@@ -142,19 +143,22 @@ async def antivouch(ctx, user:str):
         #checks if this user previously vouched them
         try:
             if ctx.author.name in vouches[user]["vouchers"]:
-                antiModifier = vouches[user]["vouchers"][ctx.author.name] * -1
+                antiModifier = vouches[user]["vouchers"][ctx.author.name]["value"] * -1
         except: 
             pass
         
         authorName = ctx.author.name
-        rankValue = returnHighestRole(roles)
+        rankValue = vouchValue(roles)
         vouches = attemptVouch(user,rankValue*-1,vouches,antiModifier)
         try:
             del vouches[user]["vouchers"][authorName]
         except:
             pass
 
-        vouches[user]["antivouchers"][authorName] = rankValue
+        vouches[user]["antivouchers"][authorName] = {
+            "value":rankValue,
+            "reason":vouchReason[:-1]
+        }
 
         #check if user has been vouched to 0 and remove if so
         if vouches[user]["vouches"] == 0:
@@ -190,22 +194,21 @@ async def vouchInfo(ctx, user:str):
             3:"<:floorgazer:722167334667550741>"
         }
 
-
-        print (user)
         #display vouch info only to ranks
         if "Floorgazer" in roles or "Keyer" in roles or "Wingman" in roles:
             
-            #create text string with 
+            #create text string with vouchers info
             vouchers = ""
             for k,v in vouches[user]["vouchers"].items():
-                vouchers = vouchers + vouchDict[v] + " " + k + "\n"
+                vouchers = vouchers + vouchDict[v["value"]] + " " + k + " - " + str(v["reason"]) + "\n"
             embed.add_field(name="Vouchers", value=vouchers, inline=False)
 
-
+            #if there is antivouchers
             if len(vouches[user]["antivouchers"]) > 0:
                 antivouchers = ""
+                #create text string with antivouchers info
                 for k,v in vouches[user]["antivouchers"].items():
-                    antivouchers = antivouchers + vouchDict[v] + " " + k + "\n"
+                    antivouchers = antivouchers + vouchDict[v["value"]] + " " + k + " - " + str(v["reason"]) + "\n"
             else:
                 antivouchers = "None"
             embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
@@ -213,6 +216,7 @@ async def vouchInfo(ctx, user:str):
             pass
 
         await ctx.send(embed=embed)
+
     except Exception as e:
         await ctx.send(e)
         await ctx.send("User does not exist")
@@ -250,12 +254,6 @@ async def create_channel(ctx, channel_name="hello"):
 async def count(ctx, number:int):
     for x in range(number):
         await ctx.send(x)
-
-
-# @bot.command(name="emojiNames")
-# async def emojiNames(ctx):
-
-
 
 @bot.event
 async def on_command_error(ctx, error):
