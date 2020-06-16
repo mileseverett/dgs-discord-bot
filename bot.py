@@ -226,7 +226,7 @@ async def antivouch(ctx, user:str,*argv):
 @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman","3s","2s","1s")
 async def vouchInfo(ctx, user:str):
 
-    fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
+    fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
     if os.path.exists(fname):
         vouches = loadPickle(fname)
     else: 
@@ -322,7 +322,7 @@ async def contextInfo(ctx):
 @commands.has_any_role("Admin",":)")
 async def whitelistChannel(ctx):
     try:
-        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".data"
+        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
 
         if os.path.exists(fname):
             settings = loadPickle(fname)
