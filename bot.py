@@ -2,6 +2,7 @@ import os
 import random
 import pickle
 import string
+import json
 
 import discord
 from discord.ext import commands
@@ -9,15 +10,14 @@ from dotenv import load_dotenv
 
 
 def dumpPickle(fname,data):
-    with open(fname, 'wb') as filehandle:
-        pickle.dump(data, filehandle)
+    with open(fname, 'w') as filehandle:
+        json.dump(data, filehandle)
+    
     return 
 
 def loadPickle(fname):
-    print (fname)
-    with open(fname, 'rb') as filehandle:
-        print ("ahh")
-        data = pickle.load(filehandle)
+    with open(fname, 'r') as filehandle:
+        data = json.load(filehandle)
         print (data)
     return data
 
@@ -55,7 +55,7 @@ def argvCombiner(argv):
     return newString
 
 def whitelistCheck(ctx):
-    fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".data"
+    fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
     settings = loadPickle(fname)
     print (settings)
     print (ctx.message.channel.id)
@@ -84,7 +84,7 @@ async def vouch(ctx, user:str, *argv):
     vouchReason = argvCombiner(argv)
 
     try:
-        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
+        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
 
         if os.path.exists(fname):
             vouches = loadPickle(fname)
@@ -158,7 +158,7 @@ async def antivouch(ctx, user:str,*argv):
     vouchReason = argvCombiner(argv)
 
     try:
-        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".data"
+        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
         if os.path.exists(fname):
             vouches = loadPickle(fname)
         else: 
@@ -346,7 +346,7 @@ async def whitelistChannel(ctx):
 @commands.has_any_role("Admin",":)")
 async def whitelistChannel(ctx):
     try:
-        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".data"
+        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
 
         if os.path.exists(fname):
             settings = loadPickle(fname)
