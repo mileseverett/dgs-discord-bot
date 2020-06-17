@@ -137,7 +137,7 @@ class vouchSystem(commands.Cog):
             self.dumpJSON(fname,vouches)
 
             print ("vouch complete:",vouches)
-            await ctx.send(vouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
+            await ctx.send(vouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]) + " also Brandon is kind of a bitch.")
         except Exception as e:
             print (e)
 
