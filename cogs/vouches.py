@@ -286,7 +286,7 @@ class vouchSystem(commands.Cog):
 
     @commands.command(name="allvouches")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman","3s","2s","1s")
-    async def findAll(self,ctx):
+    async def allvouches(self,ctx):
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
         if os.path.exists(fname):
             vouches = self.loadJSON(fname)
