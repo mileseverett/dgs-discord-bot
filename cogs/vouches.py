@@ -260,9 +260,9 @@ class vouchSystem(commands.Cog):
                         for k,v in vouches[user]["antivouchers"].items():
                             antivouchers = antivouchers + vouchDict[v["value"]] + " " + k
                             if len(v["reason"]) > 0:
-                                vouchers = vouchers + " - " + str(v["reason"]) + "\n"
+                                antivouchers = antivouchers + " - " + str(v["reason"]) + "\n"
                             else:
-                                vouchers = vouchers + "\n"
+                                antivouchers = antivouchers + "\n"
                     else:
                         antivouchers = "None"
                     embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
@@ -273,26 +273,37 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             await ctx.send(e)
             await ctx.send("User does not exist")
-
+    
     @commands.command(name="findall")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
     async def findAll(self,ctx):
-        for x in ctx.guild.members:      
-            roles = []
-            print (type(x))
-            roles.append(x.name)
-            # for y in range(len(x)):
-            #     roles.append(x[y].name)
-            # await ctx.send(x.name,roles)
-            # if "Floorgazer" in x.name.roles:
-            #     await ctx.send(x.name,"Floorgazer")
-            # elif "Keyer" in x.name.roles:
-            #     await ctx.send(x.name,"Keyer")
-            # elif "Wingman" in x.name.roles:
-            #     await ctx.send(x.name,"Wingman")
-            # else: 
-            #     await ctx.send("Who's this guy!")
-            
+        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+        if os.path.exists(fname):
+            vouches = self.loadJSON(fname)
+        else: 
+            await ctx.send("No vouches have been made on this server yet.")
+
+
+    @commands.command(name="allvouches")
+    @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman","3s","2s","1s")
+    async def findAll(self,ctx):
+        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+        if os.path.exists(fname):
+            vouches = self.loadJSON(fname)
+        else: 
+            await ctx.send("No vouches have been made on this server yet.")
+
+        try:
+            list_vouches = ""
+            for k,v in sorted(vouches.items()):
+                list_vouches = list_vouches + k.title() + " - " + str(v['vouches'] )+ "\n"
+
+            embed=discord.Embed(title="All 3s Vouches")
+            embed.add_field(name = "RSN - # of Vouches", value=list_vouches, inline=False)
+            await ctx.send(embed=embed)
+        except Exception as e:
+            await ctx.send(e)
+            await ctx.send("Couldn't print vouches")
 
     @commands.command(name='create-channel')
     @commands.has_role('Admin')
