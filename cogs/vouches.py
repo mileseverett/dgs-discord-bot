@@ -7,23 +7,12 @@ import json
 import discord
 from discord.ext import commands
 
+from utils import jsonHandling
+
 class vouchSystem(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
-
-
-
-    def dumpJSON(self,fname,data):
-        with open(fname, 'w') as filehandle:
-            json.dump(data, filehandle)
-        return 
-
-    def loadJSON(self,fname):
-        with open(fname, 'r') as filehandle:
-            data = json.load(filehandle)
-            print (data)
-        return data
 
     def attemptVouch(self,name,amount,vouches,flipModifier):
         print ("attempting to vouch")
@@ -60,7 +49,7 @@ class vouchSystem(commands.Cog):
 
     def whitelistCheck(self,ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
-        settings = self.loadJSON(fname)
+        settings = jsonHandling.loadJSON(fname)
         print (settings)
         print (ctx.message.channel.id)
         if ctx.message.channel.id in settings["whitelistedChannels"]:
@@ -78,7 +67,7 @@ class vouchSystem(commands.Cog):
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
 
             if os.path.exists(fname):
-                vouches = self.loadJSON(fname)
+                vouches = jsonHandling.loadJSON(fname)
             else: 
                 vouches = {}
 
@@ -134,7 +123,7 @@ class vouchSystem(commands.Cog):
             }
 
 
-            self.dumpJSON(fname,vouches)
+            jsonHandling.dumpJSON(fname,vouches)
 
             print ("vouch complete:",vouches)
             await ctx.send(vouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]) + " also Brandon is kind of a bitch.")
@@ -152,7 +141,7 @@ class vouchSystem(commands.Cog):
         try:
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
             if os.path.exists(fname):
-                vouches = self.loadJSON(fname)
+                vouches = jsonHandling.loadJSON(fname)
             else: 
                 vouches = {}
             print ("loaded vouches",vouches)
@@ -208,7 +197,7 @@ class vouchSystem(commands.Cog):
                 del vouches[user]
                 await ctx.send("Reached 0 vouches. Removed " + user)
 
-            self.dumpJSON(fname,vouches)
+            jsonHandling.dumpJSON(fname,vouches)
             print ("antivouch complete:",vouches)
             await ctx.send(antivouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
         except Exception as e:
@@ -220,7 +209,7 @@ class vouchSystem(commands.Cog):
 
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
         if os.path.exists(fname):
-            vouches = self.loadJSON(fname)
+            vouches = jsonHandling.loadJSON(fname)
         else: 
             await ctx.send("No vouches have been made on this server yet.")
         
@@ -279,7 +268,7 @@ class vouchSystem(commands.Cog):
     async def findAll(self,ctx):
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
         if os.path.exists(fname):
-            vouches = self.loadJSON(fname)
+            vouches = jsonHandling.loadJSON(fname)
         else: 
             await ctx.send("No vouches have been made on this server yet.")
 
@@ -289,7 +278,7 @@ class vouchSystem(commands.Cog):
     async def allvouches(self,ctx):
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
         if os.path.exists(fname):
-            vouches = self.loadJSON(fname)
+            vouches = jsonHandling.loadJSON(fname)
         else: 
             await ctx.send("No vouches have been made on this server yet.")
 
@@ -323,69 +312,6 @@ class vouchSystem(commands.Cog):
     async def contextInfo(self,ctx):
         await ctx.send(ctx.message)
 
-    @commands.command(name="whitelistchannel")
-    @commands.has_any_role("Admin",":)")
-    async def whitelistChannel(self,ctx):
-        try:
-            fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
-
-            if os.path.exists(fname):
-                settings = self.loadJSON(fname)
-            else: 
-                settings = {}
-
-            if "whitelistedChannels" in settings.keys():
-                settings["whitelistedChannels"].append(ctx.message.channel.id)
-            else:
-                settings["whitelistedChannels"] = []
-                settings["whitelistedChannels"].append(ctx.message.channel.id)
-            
-            print (settings)
-            
-            self.dumpJSON(fname,settings)
-            await ctx.send("Channel added to the whitelist.")
-        except Exception as e:
-            print (e)
-            
-    @commands.command(name="removewhitelistchannel")
-    @commands.has_any_role("Admin",":)")
-    async def removeWhitelistChannel(self,ctx):
-        try:
-            fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
-
-            if os.path.exists(fname):
-                settings = self.loadJSON(fname)
-            else: 
-                settings = {}
-
-            #check if any channels have ever been whitelisted
-            if "whitelistedChannels" in settings.keys():
-                #try to remove the channel this message was sent from
-                try:
-                    settings["whitelistedChannels"].remove(ctx.message.channel.id)
-                
-                #will throw an error if doesn't exist, so tell user it wasn't ever whitelisted.
-                except Exception as e:
-                    await ctx.send("This channel wasn't whitelisted.")
-            #tell user that no channels have ever been whitelisted in this server
-            else:
-                await ctx.send("No channels have ever been whitelisted in this server.")
-
-            print (settings)
-            
-            self.dumpJSON(fname,settings)
-            await ctx.send("Channel removed from the whitelist.")
-        except Exception as e:
-            print (e)
-
-    @commands.command(name="channelcheck")
-    @commands.has_any_role("Admin",":)")
-    async def channelCheck(self,ctx):
-        if self.whitelistCheck(ctx) == True:
-            await ctx.send("Channel is whitelisted")
-        else:
-            await ctx.send("Channel is not whitelisted")
-
     @commands.command(name="addbuffer")
     @commands.has_any_role("Admin",":)")
     async def addBuffer(self,ctx,data):
@@ -393,7 +319,7 @@ class vouchSystem(commands.Cog):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         print (fname)
         if os.path.exists(fname):
-            settings = self.loadJSON(fname)
+            settings = jsonHandling.loadJSON(fname)
         else: 
             settings = {}
         print (settings)
@@ -405,18 +331,18 @@ class vouchSystem(commands.Cog):
             vouchID = 1
             settings["vouchIDcounter"] = vouchID + 1
         print (settings)
-        self.dumpJSON(fname,settings)
+        jsonHandling.dumpJSON(fname,settings)
         print (vouchID)
         buffername = "buffers/" + ctx.guild.name.replace(" ","") +   ".json"    
         print (buffername)
         if os.path.exists(buffername):
-            testBuffer = self.loadJSON(buffername)
+            testBuffer = jsonHandling.loadJSON(buffername)
         else: 
             testBuffer = {}    
         print (testBuffer)
         testBuffer[vouchID] = data
         print (testBuffer)
-        self.dumpJSON(buffername,testBuffer)
+        jsonHandling.dumpJSON(buffername,testBuffer)
         
         await ctx.send("All done buddy")
 
@@ -427,7 +353,7 @@ class vouchSystem(commands.Cog):
         buffername = "buffers/" + ctx.guild.name.replace(" ","") +  ".json"    
         print (buffername)
         if os.path.exists(buffername):
-            testBuffer = self.loadJSON(buffername)
+            testBuffer = jsonHandling.loadJSON(buffername)
         else: 
             testBuffer = {}    
         print (testBuffer)
@@ -445,13 +371,13 @@ class vouchSystem(commands.Cog):
         buffername = "buffers/" + ctx.guild.name.replace(" ","") +  ".json"    
         print (buffername)
         if os.path.exists(buffername):
-            testBuffer = self.loadJSON(buffername)
+            testBuffer = jsonHandling.loadJSON(buffername)
         else: 
             testBuffer = {}    
         
         del testBuffer[bufferNo]
 
-        self.dumpJSON(buffername,testBuffer)
+        jsonHandling.dumpJSON(buffername,testBuffer)
         await ctx.send("Removed from buffer.")    
 
     @commands.command(name="acceptbuffer")
@@ -461,7 +387,7 @@ class vouchSystem(commands.Cog):
             buffername = "buffers/" + ctx.guild.name.replace(" ","") +  ".json"    
             print (buffername)
             if os.path.exists(buffername):
-                testBuffer = self.loadJSON(buffername)
+                testBuffer = jsonHandling.loadJSON(buffername)
             else: 
                 testBuffer = {}    
 
@@ -471,7 +397,7 @@ class vouchSystem(commands.Cog):
                 del testBuffer[x]
                 print (testBuffer)
 
-            self.dumpJSON(buffername,testBuffer)
+            jsonHandling.dumpJSON(buffername,testBuffer)
             await ctx.send("Cleared buffer")
         except Exception as e:
             print (e)
