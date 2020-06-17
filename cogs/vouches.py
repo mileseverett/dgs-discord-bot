@@ -14,12 +14,12 @@ class vouchSystem(commands.Cog):
 
 
 
-    def dumpPickle(self,fname,data):
+    def dumpJSON(self,fname,data):
         with open(fname, 'w') as filehandle:
             json.dump(data, filehandle)
         return 
 
-    def loadPickle(self,fname):
+    def loadJSON(self,fname):
         with open(fname, 'r') as filehandle:
             data = json.load(filehandle)
             print (data)
@@ -60,7 +60,7 @@ class vouchSystem(commands.Cog):
 
     def whitelistCheck(self,ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
-        settings = self.loadPickle(fname)
+        settings = self.loadJSON(fname)
         print (settings)
         print (ctx.message.channel.id)
         if ctx.message.channel.id in settings["whitelistedChannels"]:
@@ -78,7 +78,7 @@ class vouchSystem(commands.Cog):
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
 
             if os.path.exists(fname):
-                vouches = self.loadPickle(fname)
+                vouches = self.loadJSON(fname)
             else: 
                 vouches = {}
 
@@ -134,7 +134,7 @@ class vouchSystem(commands.Cog):
             }
 
 
-            self.dumpPickle(fname,vouches)
+            self.dumpJSON(fname,vouches)
 
             print ("vouch complete:",vouches)
             await ctx.send(vouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
@@ -152,7 +152,7 @@ class vouchSystem(commands.Cog):
         try:
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
             if os.path.exists(fname):
-                vouches = self.loadPickle(fname)
+                vouches = self.loadJSON(fname)
             else: 
                 vouches = {}
             print ("loaded vouches",vouches)
@@ -208,7 +208,7 @@ class vouchSystem(commands.Cog):
                 del vouches[user]
                 await ctx.send("Reached 0 vouches. Removed " + user)
 
-            self.dumpPickle(fname,vouches)
+            self.dumpJSON(fname,vouches)
             print ("antivouch complete:",vouches)
             await ctx.send(antivouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
         except Exception as e:
@@ -220,7 +220,7 @@ class vouchSystem(commands.Cog):
 
         fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
         if os.path.exists(fname):
-            vouches = self.loadPickle(fname)
+            vouches = self.loadJSON(fname)
         else: 
             await ctx.send("No vouches have been made on this server yet.")
         
@@ -319,7 +319,7 @@ class vouchSystem(commands.Cog):
             fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
 
             if os.path.exists(fname):
-                settings = self.loadPickle(fname)
+                settings = self.loadJSON(fname)
             else: 
                 settings = {}
 
@@ -331,7 +331,7 @@ class vouchSystem(commands.Cog):
             
             print (settings)
             
-            self.dumpPickle(fname,settings)
+            self.dumpJSON(fname,settings)
             await ctx.send("Channel added to the whitelist.")
         except Exception as e:
             print (e)
@@ -343,7 +343,7 @@ class vouchSystem(commands.Cog):
             fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
 
             if os.path.exists(fname):
-                settings = self.loadPickle(fname)
+                settings = self.loadJSON(fname)
             else: 
                 settings = {}
 
@@ -362,7 +362,7 @@ class vouchSystem(commands.Cog):
 
             print (settings)
             
-            self.dumpPickle(fname,settings)
+            self.dumpJSON(fname,settings)
             await ctx.send("Channel removed from the whitelist.")
         except Exception as e:
             print (e)
@@ -382,7 +382,7 @@ class vouchSystem(commands.Cog):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         print (fname)
         if os.path.exists(fname):
-            settings = self.loadPickle(fname)
+            settings = self.loadJSON(fname)
         else: 
             settings = {}
         print (settings)
@@ -394,18 +394,18 @@ class vouchSystem(commands.Cog):
             vouchID = 1
             settings["vouchIDcounter"] = vouchID + 1
         print (settings)
-        self.dumpPickle(fname,settings)
+        self.dumpJSON(fname,settings)
         print (vouchID)
         buffername = "buffers/" + ctx.guild.name.replace(" ","") +   ".json"    
         print (buffername)
         if os.path.exists(buffername):
-            testBuffer = self.loadPickle(buffername)
+            testBuffer = self.loadJSON(buffername)
         else: 
             testBuffer = {}    
         print (testBuffer)
         testBuffer[vouchID] = data
         print (testBuffer)
-        self.dumpPickle(buffername,testBuffer)
+        self.dumpJSON(buffername,testBuffer)
         
         await ctx.send("All done buddy")
 
@@ -416,7 +416,7 @@ class vouchSystem(commands.Cog):
         buffername = "buffers/" + ctx.guild.name.replace(" ","") +  ".json"    
         print (buffername)
         if os.path.exists(buffername):
-            testBuffer = self.loadPickle(buffername)
+            testBuffer = self.loadJSON(buffername)
         else: 
             testBuffer = {}    
         print (testBuffer)
@@ -434,13 +434,13 @@ class vouchSystem(commands.Cog):
         buffername = "buffers/" + ctx.guild.name.replace(" ","") +  ".json"    
         print (buffername)
         if os.path.exists(buffername):
-            testBuffer = self.loadPickle(buffername)
+            testBuffer = self.loadJSON(buffername)
         else: 
             testBuffer = {}    
         
         del testBuffer[bufferNo]
 
-        self.dumpPickle(buffername,testBuffer)
+        self.dumpJSON(buffername,testBuffer)
         await ctx.send("Removed from buffer.")    
 
     @commands.command(name="acceptbuffer")
@@ -450,7 +450,7 @@ class vouchSystem(commands.Cog):
             buffername = "buffers/" + ctx.guild.name.replace(" ","") +  ".json"    
             print (buffername)
             if os.path.exists(buffername):
-                testBuffer = self.loadPickle(buffername)
+                testBuffer = self.loadJSON(buffername)
             else: 
                 testBuffer = {}    
 
@@ -460,7 +460,7 @@ class vouchSystem(commands.Cog):
                 del testBuffer[x]
                 print (testBuffer)
 
-            self.dumpPickle(buffername,testBuffer)
+            self.dumpJSON(buffername,testBuffer)
             await ctx.send("Cleared buffer")
         except Exception as e:
             print (e)
