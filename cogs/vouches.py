@@ -57,6 +57,157 @@ class vouchSystem(commands.Cog):
         else:
             return False
 
+
+    @commands.command(name="vouchbuffer")
+    @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
+    async def vouchBuffer(self, ctx, user:str, *argv):
+        user = user.lower()
+        antiModifier = 0
+        vouchReason = self.argvCombiner(argv)
+        try:
+            fname = "buffers/" + "vouches" + ctx.guild.name.replace(" ","") + ".json"
+
+            if os.path.exists(fname):
+                vouches = jsonHandling.loadJSON(fname)
+            else: 
+                vouches = {}
+
+            roles = self.getRoles(ctx)
+            print (roles)
+            rankValue = self.vouchValue(roles)
+
+            try: 
+                prevValue = vouches[user]["vouchers"][ctx.author.name]["value"]
+            except:
+                prevValue = 1000
+
+            try:  
+                if ctx.author.name in vouches[user]["vouchers"] and rankValue == vouches[user]["vouchers"][ctx.author.name]["value"]:
+                    await ctx.send("Already vouched at current rank value.")
+                    return
+            except Exception as e:
+                print (e)
+                pass
+            try:
+                if ctx.author.name in vouches[user]["antivouchers"]:
+                    antiModifier = vouches[user]["antivouchers"][ctx.author.name]["value"]
+            except: 
+                pass
+
+            authorName = ctx.author.name
+
+            try:
+                #check if vouch is an update or not
+                print (rankValue,prevValue)
+                if ctx.author.name in vouches[user]["vouchers"] and rankValue > prevValue:
+                    print ("update vouch")
+                    newRankValue = rankValue - vouches[user]["vouchers"][ctx.author.name]["value"]
+                    vouches = self.attemptVouch(user,newRankValue,vouches,antiModifier)
+                    vouchType = "Vouch update"
+                else:
+                    print ("new vouch")
+                    vouches = self.attemptVouch(user,rankValue,vouches,antiModifier)
+                    vouchType = "Vouch"
+            #case where vouches is empty
+            except:
+                vouches = self.attemptVouch(user,rankValue,vouches,antiModifier)
+                vouchType = "Vouch"
+
+            try:
+                del vouches[user]["antivouchers"][authorName]
+            except:
+                pass
+
+            vouches[user]["vouchers"][authorName] = {
+                "value":rankValue,
+                "reason":vouchReason[:-1]
+            }
+
+
+            jsonHandling.dumpJSON(fname,vouches)
+
+            print ("vouch complete:",vouches)
+            await ctx.send(vouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]) + " also Brandon is kind of a bitch.")
+        except Exception as e:
+            print (e)
+
+    @commands.command(name="antivouchbuffer")
+    @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
+    async def antivouchBuffer(self, ctx, user:str,*argv):
+        user = user.lower()
+        antiModifier = 0
+
+        vouchReason = self.argvCombiner(argv)
+
+        try:
+            fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+            if os.path.exists(fname):
+                vouches = jsonHandling.loadJSON(fname)
+            else: 
+                vouches = {}
+            print ("loaded vouches",vouches)
+
+            roles = self.getRoles(ctx)
+            rankValue = self.vouchValue(roles)
+            try:
+                print ("rankValue",rankValue,"previousVouch",vouches[user]["antivouchers"][ctx.author.name]["value"])
+            except Exception as e:
+                print (e)
+                pass
+            try:
+                if ctx.author.name in vouches[user]["antivouchers"] and rankValue == vouches[user]["antivouchers"][ctx.author.name]["value"]:
+                    await ctx.send("Already antivouched at current rank value.")
+                    return
+            except:
+                pass
+
+            #checks if this user previously vouched them
+            try:
+                if ctx.author.name in vouches[user]["vouchers"]:
+                    antiModifier = vouches[user]["vouchers"][ctx.author.name]["value"] * -1
+            except: 
+                pass
+            
+            authorName = ctx.author.name
+            
+
+            #updating antivouch
+            if ctx.author.name in vouches[user]["antivouchers"] and rankValue > vouches[user]["antivouchers"][ctx.author.name]["value"]:
+                newRankValue = rankValue - vouches[user]["antivouchers"][ctx.author.name]["value"]
+                vouches = self.attemptVouch(user,newRankValue*-1,vouches,antiModifier)
+                antivouchType = "Antivouch update"
+            #if user hasn't antivouched before
+            else:
+                vouches = self.attemptVouch(user,rankValue*-1,vouches,antiModifier)
+                antivouchType = "Antivouch"
+            
+            
+            
+            try:
+                del vouches[user]["vouchers"][authorName]
+            except:
+                pass
+
+            vouches[user]["antivouchers"][authorName] = {
+                "value":rankValue,
+                "reason":vouchReason[:-1]
+            }
+
+            #check if user has been vouched to 0 and remove if so
+            if vouches[user]["vouches"] == 0:
+                del vouches[user]
+                await ctx.send("Reached 0 vouches. Removed " + user)
+
+            jsonHandling.dumpJSON(fname,vouches)
+            print ("antivouch complete:",vouches)
+            await ctx.send(antivouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
+        except Exception as e:
+            print (e)
+
+
+
+
+
     @commands.command(name="vouch")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
     async def vouch(self, ctx, user:str, *argv):
