@@ -35,6 +35,8 @@ class vouchSystem(commands.Cog):
             value = 2
         elif "Wingman" in roles or "Wingwoman" in roles:
             value = 1
+        else: 
+            value = 0
         return value
 
     def getRoles(self,ctx):
