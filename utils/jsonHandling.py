@@ -1,4 +1,5 @@
 import json
+import os
 
 def dumpJSON(fname,data):
     with open(fname, 'w') as filehandle:
