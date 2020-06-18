@@ -4,6 +4,7 @@ import pickle
 import string
 import json
 import sys, traceback
+import datetime
 
 import discord
 from discord.ext import commands
@@ -102,7 +103,6 @@ class vouchSystem(commands.Cog):
             traceback.print_exc(file=sys.stdout)
             vouchInfo = {
                     "user":user,
-                    "voucher":"hey",
                     "rankValue":rankValue,
                     "antiModifier":antiModifier
             }    
@@ -153,20 +153,17 @@ class vouchSystem(commands.Cog):
             # vouches = self.attemptVouch(vouchInfo["user"],vouchInfo["rankValue"],vouches,vouchInfo["antiModifier"])
 
             authorName = ctx.author.name
-            
+
             # try:
             #     del vouches[user]["antivouchers"][authorName]
             # except:
             #     pass
 
-            # vouches[user]["vouchers"][authorName] = {
-            #     "value":vouchInfo["rankValue"],
-            #     "reason":vouchReason[:-1]
-            # }
-
             voucherInfo = {
                 "value":vouchInfo["rankValue"],
-                "reason":vouchReason[:-1]                
+                "reason":vouchReason[:-1],
+                "voucher":authorName,
+                "vouch queued":"find a way to store date/time"        
             }
 
             bufferData = {
@@ -179,7 +176,8 @@ class vouchSystem(commands.Cog):
             # jsonHandling.dumpJSON(fname,vouches)
 
             print ("vouch added to buffer:",vouches)
-            await ctx.send(" " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]) + " also Brandon is kind of a bitch.")
+            
+            await ctx.send("Your vouch for " + user + " has been added to the queue to be reviewed by admins.")
         except Exception as e:
             print (e)
             traceback.print_exc(file=sys.stdout)
