@@ -10,3 +10,10 @@ def loadJSON(fname):
         data = json.load(filehandle)
         print (data)
     return data
+
+def checkIfExists(fname):
+    if os.path.exists(fname):
+        data = loadJSON(fname)
+    else: 
+        data = {}
+    return data

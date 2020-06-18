@@ -129,54 +129,31 @@ class vouchSystem(commands.Cog):
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
     async def vouch(self, ctx, user:str, *argv):
         try:
-        
             user = user.lower()
-            antiModifier = 0
             vouchReason = self.argvCombiner(argv)
-
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
-
-            if os.path.exists(fname):
-                vouches = jsonHandling.loadJSON(fname)
-            else: 
-                vouches = {}
-
+            vouches = jsonHandling.checkIfExists(fname)
             acceptableVouch, vouchInfo = self.checkHistory("vouch",vouches,ctx,user)
-
             if acceptableVouch == False:
                 await ctx.send("Unacceptable vouch.")
                 return
-
             print (acceptableVouch,vouchInfo)
-
-            #attemptVouch will modify the vouchNo
-            # vouches = self.attemptVouch(vouchInfo["user"],vouchInfo["rankValue"],vouches,vouchInfo["antiModifier"])
-
             authorName = ctx.author.name
-
             # try:
             #     del vouches[user]["antivouchers"][authorName]
             # except:
             #     pass
-
             voucherInfo = {
                 "value":vouchInfo["rankValue"],
                 "reason":vouchReason[:-1],
                 "voucher":authorName,
                 "vouch queued":"find a way to store date/time"        
             }
-
             bufferData = {
                 "vouchInfo":vouchInfo,
                 "voucherInfo":voucherInfo
             }
-
             bufferHandling.addBuffer(ctx.guild.name.replace(" ",""),"vouches",bufferData)
-
-            # jsonHandling.dumpJSON(fname,vouches)
-
-            print ("vouch added to buffer:",vouches)
-            
             await ctx.send("Your vouch for " + user + " has been added to the queue to be reviewed by admins.")
         except Exception as e:
             print (e)
