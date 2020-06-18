@@ -7,7 +7,7 @@ import json
 import discord
 from discord.ext import commands
 
-from utils import jsonHandling
+from utils import jsonHandling, bufferHandling
 
 class vouchSystem(commands.Cog):
     
