@@ -132,7 +132,7 @@ class vouchSystem(commands.Cog):
             user = user.lower()
             vouchReason = self.argvCombiner(argv)
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
-            vouches = jsonHandling.checkIfExists(fname)
+            vouches = jsonHandling.loadJSON(fname)
             acceptableVouch, vouchInfo = self.checkHistory("vouch",vouches,ctx,user)
             if acceptableVouch == False:
                 await ctx.send("Unacceptable vouch.")
@@ -159,8 +159,6 @@ class vouchSystem(commands.Cog):
             print (e)
             traceback.print_exc(file=sys.stdout)
         
-        
-
     @commands.command(name="antivouch")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
     async def antivouch(self, ctx, user:str,*argv):
