@@ -210,6 +210,8 @@ class vouchSystem(commands.Cog):
     @commands.command(name="acceptvouch")
     async def acceptVouch(self,ctx,vouchID:str):
         try:
+            #Message to be printed out at the end.
+            message = "Vouch complete!"
             #get data for this vouchID
             vouchData = bufferHandling.getBufferData(ctx.guild.name.replace(" ",""),"vouches",vouchID)
             #get vouches data
@@ -237,13 +239,13 @@ class vouchSystem(commands.Cog):
             #check if user has been vouched to 0 and remove if so
             if vouches[vouchData["vouchInfo"]["user"]]["vouches"] == 0:
                 del vouches[vouchData["vouchInfo"]["user"]]
-                await ctx.send("Reached 0 vouches. Removed " + vouchData["vouchInfo"]["user"])
+                message = ("Reached 0 vouches. Removed " + vouchData["vouchInfo"]["user"])
 
             #save vouch data
             jsonHandling.dumpJSON(fname,vouches)
             #remove vouch from buffer
             bufferHandling.removeBuffer(ctx.guild.name.replace(" ",""),"vouches",vouchID)
-            await ctx.send("Vouch complete")
+            await ctx.send(message)
         except Exception as e:
             print (e)
             traceback.print_exc(file=sys.stdout)
