@@ -51,10 +51,7 @@ def addBuffer(serverName,bufferType,data):
 
 def viewBuffer(serverName,bufferType,embedTitle,embedMessage):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
-    if os.path.exists(buffername):
-        testBuffer = jsonHandling.loadJSON(buffername)
-    else: 
-        testBuffer = {}    
+    testBuffer = jsonHandling.loadJSON(buffername)
     embed=Embed(title=embedTitle)
     embed.add_field(name="Note",value=embedMessage,inline=False)
     for k,v in testBuffer.items():
@@ -63,10 +60,7 @@ def viewBuffer(serverName,bufferType,embedTitle,embedMessage):
 
 def removeBuffer(serverName,bufferType,bufferNo:int):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
-    if os.path.exists(buffername):
-        testBuffer = jsonHandling.loadJSON(buffername)
-    else: 
-        testBuffer = {}    
+    testBuffer = jsonHandling.loadJSON(buffername)   
     if bufferNo == 0:
         for x in list(testBuffer):
             del testBuffer[x]
@@ -74,6 +68,11 @@ def removeBuffer(serverName,bufferType,bufferNo:int):
         del testBuffer[bufferNo]
     jsonHandling.dumpJSON(buffername,testBuffer)
     return
+
+def getAllBufferData(serverName,bufferType):
+    buffername = "buffers/" + serverName + bufferType +  ".json"
+    bufferData = jsonHandling.loadJSON(buffername)
+    return bufferData
 
 def getBufferData(serverName,bufferType,bufferNo:int):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
@@ -90,3 +89,4 @@ def getBufferIDs(serverName,bufferType):
     else: 
         testBuffer = {}   
     return list(testBuffer)
+

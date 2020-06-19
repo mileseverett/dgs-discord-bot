@@ -15,6 +15,11 @@ class vouchSystem(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
+        self.vouchDict = {
+                1:"<:wingman:722167334688784434>",
+                2:"<:keyer:722167334357303368>",
+                3:"<:floorgazer:722167334667550741>"
+            }
 
     def attemptVouch(self,name,amount,vouches,flipModifier):
         print ("attempting to vouch")
@@ -234,6 +239,50 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print (e)
 
+    @commands.command(name="vouchbuffer")
+    async def viewVouchBuffer(self,ctx):
+        try:
+            bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""),"vouches")
+            print (bufferData)
+            embed = discord.Embed(title="Vouches Buffer")
+            for k,v in bufferData.items():
+                vouchLine = string.capwords(v["vouchInfo"]["user"]) + " " + v["voucherInfo"]["voucher"]
+                embed.add_field(name=k, value=vouchLine, inline=False)
+            await ctx.send(embed=embed)
+        except Exception as e:
+            print (e)
+            traceback.print_exc(file=sys.stdout)
+
+    @commands.command(name="removevouch")
+    async def removeVouch(self,ctx,vouchID:str):
+        try:   
+            bufferHandling.removeBuffer(ctx.guild.name.replace(" ",""),"vouches",vouchID)
+            await ctx.send("Removed from buffer.")  
+        except Exception as e:
+            print (e)
+            traceback.print_exc(file=sys.stdout)
+
+    @commands.command(name="acceptvouch")
+    async def acceptVouch(self,ctx,vouchID:str):
+        try:
+            #get data for this vouchID
+            vouchData = bufferHandling.getBufferData(ctx.guild.name.replace(" ",""),"vouches",vouchID)
+            #get vouches data
+            fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+            vouches = jsonHandling.loadJSON(fname)
+            #add the vouch to the vouch datastore
+            vouches = self.attemptVouch(vouchData["vouchInfo"]["user"],vouchData["voucherInfo"]["value"],vouches,vouchData["vouchInfo"]["antiModifier"])          
+            #add the voucher info to the vouch datastore
+            vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
+            #save vouch data
+            jsonHandling.dumpJSON(fname,vouches)
+            #remove vouch from buffer
+            bufferHandling.removeBuffer(ctx.guild.name.replace(" ",""),"vouches",vouchID)
+            await ctx.send("Vouch complete")
+        except Exception as e:
+            print (e)
+            traceback.print_exc(file=sys.stdout)
+
     @commands.command(name="vouchinfo")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman","3s","2s","1s")
     async def vouchInfo(self, ctx, user:str):
@@ -250,12 +299,6 @@ class vouchSystem(commands.Cog):
             embedTitle = "Vouches for " + string.capwords(user)
             embed=discord.Embed(title=embedTitle)
 
-            vouchDict = {
-                1:"<:wingman:722167334688784434>",
-                2:"<:keyer:722167334357303368>",
-                3:"<:floorgazer:722167334667550741>"
-            }
-
             embed.add_field(name="Vouches", value=vouches[user]["vouches"], inline=False)
             
             try:
@@ -266,11 +309,12 @@ class vouchSystem(commands.Cog):
                     #create text string with vouchers info
                     vouchers = ""
                     for k,v in vouches[user]["vouchers"].items():
-                        vouchers = vouchers + vouchDict[v["value"]] + " " + k 
+                        vouchers = vouchers + self.vouchDict[v["value"]] + " " + k 
                         if len(v["reason"]) > 0:
                             vouchers = vouchers + " - " + str(v["reason"]) + "\n"
                         else:
                             vouchers = vouchers + "\n"
+                    print ("vouchers",vouchers)
                     embed.add_field(name="Vouchers", value=vouchers, inline=False)
 
                     #if there is antivouchers
@@ -278,13 +322,14 @@ class vouchSystem(commands.Cog):
                         antivouchers = ""
                         #create text string with antivouchers info
                         for k,v in vouches[user]["antivouchers"].items():
-                            antivouchers = antivouchers + vouchDict[v["value"]] + " " + k
+                            antivouchers = antivouchers + self.vouchDict[v["value"]] + " " + k
                             if len(v["reason"]) > 0:
                                 antivouchers = antivouchers + " - " + str(v["reason"]) + "\n"
                             else:
                                 antivouchers = antivouchers + "\n"
                     else:
                         antivouchers = "None"
+                    print ("antivouchers",antivouchers)
                     embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
             except:
                 pass
@@ -390,10 +435,10 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print (e)
 
-    @commands.Cog.listener()
-    async def on_command_error(self,ctx,error):
-        if isinstance(error, commands.errors.CheckFailure):
-            await ctx.send('You do not have the correct role for this command.')
+    # @commands.Cog.listener()
+    # async def on_command_error(self,ctx,error):
+    #     if isinstance(error, commands.errors.CheckFailure):
+    #         await ctx.send('You do not have the correct role for this command.')
 
 def setup(bot):
     bot.add_cog(vouchSystem(bot))
