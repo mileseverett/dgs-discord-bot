@@ -283,6 +283,8 @@ class vouchSystem(commands.Cog):
             print (e)
             traceback.print_exc(file=sys.stdout)
 
+    
+
     @commands.command(name="vouchinfo")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman","3s","2s","1s")
     async def vouchInfo(self, ctx, user:str):
@@ -435,10 +437,12 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print (e)
 
-    # @commands.Cog.listener()
-    # async def on_command_error(self,ctx,error):
-    #     if isinstance(error, commands.errors.CheckFailure):
-    #         await ctx.send('You do not have the correct role for this command.')
+    @commands.Cog.listener()
+    async def on_command_error(self,ctx,error):
+        if isinstance(error, commands.errors.CheckFailure):
+            await ctx.send('You do not have the correct role for this command.')
+        else:
+            await ctx.send(error.)
 
 def setup(bot):
     bot.add_cog(vouchSystem(bot))
