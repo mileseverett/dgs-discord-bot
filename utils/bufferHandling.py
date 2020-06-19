@@ -35,7 +35,7 @@ def addBuffer(serverName,bufferType,data):
 
     #generate filename of buffer file for this server + buffer type
     buffername = "buffers/" + serverName + bufferType + ".json"    
-    print (buffername)
+    print ("buffername",buffername)
     #load buffer
     if os.path.exists(buffername):
         testBuffer = jsonHandling.loadJSON(buffername)

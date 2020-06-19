@@ -51,19 +51,21 @@ class vouchSystem(commands.Cog):
         return roles
 
     def checkHistory(self,vouchType,vouches,ctx,user):
+        anti = 1
         if vouchType == "vouch":
             checkOppositeDict = "antivouchers"
             checkDict = "vouchers"
         elif vouchType == "antivouch":
             checkOppositeDict = "vouchers"
             checkDict = "antivouchers"
+            anti = -1
 
         roles = self.getRoles(ctx)
         rankValue = self.vouchValue(roles)
         antiModifier = 0
         #check if this person has vouched/antivouched the user in the past and at what value
         try: 
-            prevValue = vouches[user][checkDct][ctx.author.name]["value"]
+            prevValue = vouches[user][checkDict][ctx.author.name]["value"]
         #set it to something high
         except:
             prevValue = 1000
@@ -81,38 +83,24 @@ class vouchSystem(commands.Cog):
         #check to see if this user is flipping their vouch/anti
         try:
             if ctx.author.name in vouches[user][checkOppositeDict]:
-                antiModifier = vouches[user][checkOppositeDict][ctx.author.name]["value"]
+                antiModifier = vouches[user][checkOppositeDict][ctx.author.name]["value"] * -1
         except Exception as e:
             print (e) 
         print ("values",rankValue,prevValue)
         try:
             #check if vouch is an update or not
-            if ctx.author.name in vouches[user]["vouchers"] and rankValue > prevValue:
-                rankValue = rankValue - vouches[user]["vouchers"][ctx.author.name]["value"]
-                vouchInfo = {
-                    "user":user,
-                    "voucher":"hey",
-                    "rankValue":rankValue,
-                    "antiModifier":antiModifier
-                }
-                print (vouchInfo)               
-            #new vouch
-            else:
-                vouchInfo = {
-                    "user":user,
-                    "voucher":"hey",
-                    "rankValue":rankValue,
-                    "antiModifier":antiModifier
-                }
-                print (vouchInfo)
-        except Exception as e:
-            print (e)
+            if ctx.author.name in vouches[user][checkDict] and rankValue > prevValue:
+                rankValue = rankValue - vouches[user][checkDict][ctx.author.name]["value"]             
+        except Exception as ಠ_ಠ:
+            print (ಠ_ಠ)
             traceback.print_exc(file=sys.stdout)
-            vouchInfo = {
-                    "user":user,
-                    "rankValue":rankValue,
-                    "antiModifier":antiModifier
-            }    
+
+        vouchInfo = {
+            "user":user,
+            "rankValue":rankValue * anti,
+            "antiModifier":antiModifier,
+            "vouchType":vouchType
+        }       
 
         return True, vouchInfo
 
@@ -139,6 +127,7 @@ class vouchSystem(commands.Cog):
             user = user.lower()
             vouchReason = self.argvCombiner(argv)
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+            print (fname)
             vouches = jsonHandling.loadJSON(fname)
             acceptableVouch, vouchInfo = self.checkHistory("vouch",vouches,ctx,user)
             if acceptableVouch == False:
@@ -146,10 +135,39 @@ class vouchSystem(commands.Cog):
                 return
             print (acceptableVouch,vouchInfo)
             authorName = ctx.author.name
-            # try:
-            #     del vouches[user]["antivouchers"][authorName]
-            # except:
-            #     pass
+
+            voucherInfo = {
+                "value":vouchInfo["rankValue"],
+                "reason":vouchReason[:-1],
+                "voucher":authorName,
+                "vouch queued":"find a way to store date/time"        
+            }
+
+            bufferData = {
+                "vouchInfo":vouchInfo,
+                "voucherInfo":voucherInfo
+            }
+
+            bufferHandling.addBuffer(ctx.guild.name.replace(" ",""),"vouches",bufferData)
+            await ctx.send("Your vouch for " + user + " has been added to the queue to be reviewed by admins.")
+        except Exception as e:
+            print (e)
+            traceback.print_exc(file=sys.stdout)
+        
+    @commands.command(name="antivouch")
+    @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
+    async def antivouch(self, ctx, user:str,*argv):
+        try:
+            user = user.lower()
+            vouchReason = self.argvCombiner(argv)
+            fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+            vouches = jsonHandling.loadJSON(fname)
+            acceptableVouch, vouchInfo = self.checkHistory("antivouch",vouches,ctx,user)
+            if acceptableVouch == False:
+                await ctx.send("Unacceptable vouch.")
+                return
+            print (acceptableVouch,vouchInfo)
+            authorName = ctx.author.name
             voucherInfo = {
                 "value":vouchInfo["rankValue"],
                 "reason":vouchReason[:-1],
@@ -165,79 +183,6 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print (e)
             traceback.print_exc(file=sys.stdout)
-        
-    @commands.command(name="antivouch")
-    @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
-    async def antivouch(self, ctx, user:str,*argv):
-        user = user.lower()
-        antiModifier = 0
-
-        vouchReason = self.argvCombiner(argv)
-
-        try:
-            fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
-            if os.path.exists(fname):
-                vouches = jsonHandling.loadJSON(fname)
-            else: 
-                vouches = {}
-            print ("loaded vouches",vouches)
-
-            roles = self.getRoles(ctx)
-            rankValue = self.vouchValue(roles)
-            try:
-                print ("rankValue",rankValue,"previousVouch",vouches[user]["antivouchers"][ctx.author.name]["value"])
-            except Exception as e:
-                print (e)
-                pass
-            try:
-                if ctx.author.name in vouches[user]["antivouchers"] and rankValue == vouches[user]["antivouchers"][ctx.author.name]["value"]:
-                    await ctx.send("Already antivouched at current rank value.")
-                    return
-            except:
-                pass
-
-            #checks if this user previously vouched them
-            try:
-                if ctx.author.name in vouches[user]["vouchers"]:
-                    antiModifier = vouches[user]["vouchers"][ctx.author.name]["value"] * -1
-            except: 
-                pass
-            
-            authorName = ctx.author.name
-            
-
-            #updating antivouch
-            if ctx.author.name in vouches[user]["antivouchers"] and rankValue > vouches[user]["antivouchers"][ctx.author.name]["value"]:
-                newRankValue = rankValue - vouches[user]["antivouchers"][ctx.author.name]["value"]
-                vouches = self.attemptVouch(user,newRankValue*-1,vouches,antiModifier)
-                antivouchType = "Antivouch update"
-            #if user hasn't antivouched before
-            else:
-                vouches = self.attemptVouch(user,rankValue*-1,vouches,antiModifier)
-                antivouchType = "Antivouch"
-            
-            
-            
-            try:
-                del vouches[user]["vouchers"][authorName]
-            except:
-                pass
-
-            vouches[user]["antivouchers"][authorName] = {
-                "value":rankValue,
-                "reason":vouchReason[:-1]
-            }
-
-            #check if user has been vouched to 0 and remove if so
-            if vouches[user]["vouches"] == 0:
-                del vouches[user]
-                await ctx.send("Reached 0 vouches. Removed " + user)
-
-            jsonHandling.dumpJSON(fname,vouches)
-            print ("antivouch complete:",vouches)
-            await ctx.send(antivouchType + " " + string.capwords(user) + ". They are now on " + str(vouches[user]["vouches"]))
-        except Exception as e:
-            print (e)
 
     @commands.command(name="vouchbuffer")
     async def viewVouchBuffer(self,ctx):
@@ -272,8 +217,28 @@ class vouchSystem(commands.Cog):
             vouches = jsonHandling.loadJSON(fname)
             #add the vouch to the vouch datastore
             vouches = self.attemptVouch(vouchData["vouchInfo"]["user"],vouchData["voucherInfo"]["value"],vouches,vouchData["vouchInfo"]["antiModifier"])          
+           
             #add the voucher info to the vouch datastore
-            vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
+            #if it's a vouch
+            if vouchData["vouchInfo"]["vouchType"] == "vouch":
+                vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
+                try:
+                    del vouches[vouchData["vouchInfo"]["user"]]["antivouchers"][vouchData["voucherInfo"]["voucher"]]
+                except:
+                    pass
+            #if it's an antivouch
+            elif vouchData["vouchInfo"]["vouchType"] == "antivouch":
+                vouches[vouchData["vouchInfo"]["user"]]["antivouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
+                try:
+                    del vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]]
+                except:
+                    pass
+
+            #check if user has been vouched to 0 and remove if so
+            if vouches[vouchData["vouchInfo"]["user"]]["vouches"] == 0:
+                del vouches[vouchData["vouchInfo"]["user"]]
+                await ctx.send("Reached 0 vouches. Removed " + vouchData["vouchInfo"]["user"])
+
             #save vouch data
             jsonHandling.dumpJSON(fname,vouches)
             #remove vouch from buffer
@@ -320,11 +285,12 @@ class vouchSystem(commands.Cog):
                     embed.add_field(name="Vouchers", value=vouchers, inline=False)
 
                     #if there is antivouchers
+                    print (len(vouches[user]["antivouchers"]))
                     if len(vouches[user]["antivouchers"]) > 0:
                         antivouchers = ""
                         #create text string with antivouchers info
                         for k,v in vouches[user]["antivouchers"].items():
-                            antivouchers = antivouchers + self.vouchDict[v["value"]] + " " + k
+                            antivouchers = antivouchers + self.vouchDict[abs(v["value"])] + " " + k
                             if len(v["reason"]) > 0:
                                 antivouchers = antivouchers + " - " + str(v["reason"]) + "\n"
                             else:
@@ -442,7 +408,7 @@ class vouchSystem(commands.Cog):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send('You do not have the correct role for this command.')
         else:
-            await ctx.send(error.)
+            await ctx.send(error)
 
 def setup(bot):
     bot.add_cog(vouchSystem(bot))

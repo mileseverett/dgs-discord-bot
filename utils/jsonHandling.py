@@ -7,7 +7,9 @@ def dumpJSON(fname,data):
     return 
 
 def loadJSON(fname):
+    print (fname)
     if os.path.exists(fname):
+        print ("File exists")
         with open(fname, 'r') as filehandle:
             data = json.load(filehandle)
             print (data)
