@@ -307,11 +307,14 @@ class vouchSystem(commands.Cog):
 
     @commands.command(name="removeuser")
     async def removeUser(self,ctx,user:str):
-        fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
-        vouches = jsonHandling.loadJSON(fname)
-        del vouches[user.lower()]
-        jsonHandling.dumpJSON(fname,vouches)
-        await ctx.send(user + " was completely removed from the vouch list.")
+        if self.whitelistCheck(ctx) == False:
+                await ctx.send("This command is not allowed in this channel.")
+        else:
+            fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
+            vouches = jsonHandling.loadJSON(fname)
+            del vouches[user.lower()]
+            jsonHandling.dumpJSON(fname,vouches)
+            await ctx.send(user + " was completely removed from the vouch list.")
 
     @commands.command(name="vouchbuffer")
     async def viewVouchBuffer(self,ctx):
