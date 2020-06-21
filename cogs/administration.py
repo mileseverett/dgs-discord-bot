@@ -17,8 +17,8 @@ class adminSystem(commands.Cog):
     def whitelistCheck(self,ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
-        print (settings)
-        print (ctx.message.channel.id)
+        print(settings)
+        print(ctx.message.channel.id)
         if ctx.message.channel.id in settings["whitelistedChannels"]:
             return True
         else:
@@ -41,19 +41,19 @@ class adminSystem(commands.Cog):
                 settings["whitelistedChannels"] = []
                 settings["whitelistedChannels"].append(ctx.message.channel.id)
             
-            print (settings)
+            print(settings)
             
             jsonHandling.dumpJSON(fname,settings)
             await ctx.send("Channel added to the whitelist.")
         except Exception as e:
-            print (e)
+            print(e)
             
     @commands.command(name="removewhitelistchannel")
     @commands.has_any_role("Admin",":)")
     async def removeWhitelistChannel(self,ctx):
         try:
             fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
-            print (fname)
+            print(fname)
             if os.path.exists(fname):
                 settings = jsonHandling.loadJSON(fname)
             else: 
@@ -72,12 +72,12 @@ class adminSystem(commands.Cog):
             else:
                 await ctx.send("No channels have ever been whitelisted in this server.")
 
-            print (settings)
-            print ("fname again",fname)
+            print(settings)
+            print("fname again",fname)
             jsonHandling.dumpJSON(fname,settings)
             await ctx.send("Channel removed from the whitelist.")
         except Exception as e:
-            print (e)
+            print(e)
 
     @commands.command(name="channelcheck")
     @commands.has_any_role("Admin",":)")
