@@ -53,7 +53,7 @@ class vouchSystem(commands.Cog):
     def checkBuffer(self,ctx,user):
         bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""),"vouches")
         for k,v in bufferData.items():
-            if v["vouchInfo"]["user"] == user and v["voucherInfo"]["voucher"] == ctx.author.id:
+            if v["vouchInfo"]["user"] == user and v["voucherInfo"]["voucher"] == str(ctx.author.id):
                 return False
         return True
 
@@ -86,15 +86,15 @@ class vouchSystem(commands.Cog):
         antiModifier = 0
         #check if this person has vouched/antivouched the user in the past and at what value
         try: 
-            prevValue = vouches[user][checkDict][ctx.author.id]["value"]
+            prevValue = vouches[user][checkDict][str(ctx.author.id)]["value"]
         #set it to something high
         except:
             prevValue = 1000
             traceback.print_exc(file=sys.stdout)
-        
+            
         #check if this user has already vouched AND at the current value
         try:  
-            if ctx.author.id in vouches[user][checkDict] and rankValue == prevValue:
+            if str(ctx.author.id) in vouches[user][checkDict] and rankValue == prevValue:
                 return False, {"reason":"Already vouched this user at current rank value."}
         except Exception as e:
             print (e)
@@ -104,16 +104,16 @@ class vouchSystem(commands.Cog):
         #check to see if this user is flipping their vouch/anti
         try:
             print ("oppositeDict=",checkOppositeDict)
-            if ctx.author.id in vouches[user][checkOppositeDict]:
-                changeBy = vouches[user][checkOppositeDict][ctx.author.id]["value"] 
+            if str(ctx.author.id) in vouches[user][checkOppositeDict]:
+                changeBy = vouches[user][checkOppositeDict][str(ctx.author.id)]["value"] 
                 print ("prevValue",prevValue)
         except Exception as e:
             print (e) 
         print ("values",rankValue,prevValue)
         try:
             #check if vouch is an update or not
-            if ctx.author.id in vouches[user][checkDict] and rankValue > prevValue:
-                changeBy = vouches[user][checkDict][ctx.author.id]["value"]          
+            if str(ctx.author.id) in vouches[user][checkDict] and rankValue > prevValue:
+                changeBy = vouches[user][checkDict][str(ctx.author.id)]["value"]          
         except Exception as ಠ_ಠ:
             print (ಠ_ಠ)
             traceback.print_exc(file=sys.stdout)
@@ -209,7 +209,7 @@ class vouchSystem(commands.Cog):
                 await ctx.send(vouchInfo["reason"])
                 return
             print (acceptableVouch,vouchInfo)
-            authorName = ctx.author.id
+            authorName = str(ctx.author.id)
 
             voucherInfo = {
                 "value":vouchInfo["rankValue"],
@@ -249,7 +249,7 @@ class vouchSystem(commands.Cog):
                 await ctx.send(vouchInfo["reason"])
                 return
             print (acceptableVouch,vouchInfo)
-            authorName = ctx.author.id
+            authorName = str(ctx.author.id)
             voucherInfo = {
                 "value":vouchInfo["rankValue"],
                 "reason":vouchReason[:-1],
