@@ -50,7 +50,18 @@ class vouchSystem(commands.Cog):
             roles.append(x.name)
         return roles
 
+    def checkBuffer(self,ctx,user):
+        bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""),"vouches")
+        for k,v in bufferData.items():
+            if v["vouchInfo"]["user"] == user and v["voucherInfo"]["voucher"] == ctx.author.name:
+                return False
+        return True
+
     def checkHistory(self,vouchType,vouches,ctx,user):
+        
+        if self.checkBuffer(ctx,user) == False:
+            return False, {"reason":"A vouch from you for this user is already in the buffer awaiting approval."}
+
         anti = 1
         if vouchType == "vouch":
             checkOppositeDict = "antivouchers"
@@ -73,8 +84,8 @@ class vouchSystem(commands.Cog):
         
         #check if this user has already vouched AND at the current value
         try:  
-            if ctx.author.name in vouches[user][checkDict] and rankValue == prevValue:
-                return False, {}
+            if ctx.author.name in vouches[user][checkDict] and abs(rankValue) == abs(prevValue):
+                return False, {"reason":"Already vouched this user at current rank value."}
         except Exception as e:
             print (e)
             traceback.print_exc(file=sys.stdout)
@@ -123,6 +134,9 @@ class vouchSystem(commands.Cog):
     @commands.command(name="vouch")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
     async def vouch(self, ctx, user:str, *argv):
+        if self.whitelistCheck(ctx) == False:
+            await ctx.send("Cannot do that in this channel")
+            return
         try:
             user = user.lower()
             vouchReason = self.argvCombiner(argv)
@@ -131,7 +145,7 @@ class vouchSystem(commands.Cog):
             vouches = jsonHandling.loadJSON(fname)
             acceptableVouch, vouchInfo = self.checkHistory("vouch",vouches,ctx,user)
             if acceptableVouch == False:
-                await ctx.send("Unacceptable vouch.")
+                await ctx.send(vouchInfo["reason"])
                 return
             print (acceptableVouch,vouchInfo)
             authorName = ctx.author.name
@@ -157,6 +171,9 @@ class vouchSystem(commands.Cog):
     @commands.command(name="antivouch")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
     async def antivouch(self, ctx, user:str,*argv):
+        if self.whitelistCheck(ctx) == False:
+            await ctx.send("Cannot do that in this channel")
+            return
         try:
             user = user.lower()
             vouchReason = self.argvCombiner(argv)
@@ -164,7 +181,7 @@ class vouchSystem(commands.Cog):
             vouches = jsonHandling.loadJSON(fname)
             acceptableVouch, vouchInfo = self.checkHistory("antivouch",vouches,ctx,user)
             if acceptableVouch == False:
-                await ctx.send("Unacceptable vouch.")
+                await ctx.send(vouchInfo["reason"])
                 return
             print (acceptableVouch,vouchInfo)
             authorName = ctx.author.name
@@ -191,7 +208,7 @@ class vouchSystem(commands.Cog):
             print (bufferData)
             embed = discord.Embed(title="Vouches Buffer")
             for k,v in bufferData.items():
-                vouchLine = string.capwords(v["vouchInfo"]["user"]) + " " + v["voucherInfo"]["voucher"]
+                vouchLine = self.vouchDict[abs(v["vouchInfo"]["rankValue"])] + v["voucherInfo"]["voucher"] + " " + v["vouchInfo"]["vouchType"] + "ed " + string.capwords(v["vouchInfo"]["user"]) + "\n" + v["voucherInfo"]["reason"]
                 embed.add_field(name=k, value=vouchLine, inline=False)
             await ctx.send(embed=embed)
         except Exception as e:
@@ -218,7 +235,7 @@ class vouchSystem(commands.Cog):
             fname = "vouches/" + ctx.guild.name.replace(" ","") + ".json"
             vouches = jsonHandling.loadJSON(fname)
             #add the vouch to the vouch datastore
-            vouches = self.attemptVouch(vouchData["vouchInfo"]["user"],vouchData["voucherInfo"]["value"],vouches,vouchData["vouchInfo"]["antiModifier"])          
+            vouches = self.attemptVouch(vouchData["vouchInfo"]["user"],vouchData["vouchInfo"]["rankValue"],vouches,vouchData["vouchInfo"]["antiModifier"])          
            
             #add the voucher info to the vouch datastore
             #if it's a vouch
@@ -306,8 +323,8 @@ class vouchSystem(commands.Cog):
             await ctx.send(embed=embed)
 
         except Exception as e:
-            await ctx.send(e)
-            await ctx.send("User does not exist")
+            print (e)
+            traceback.print_exc(file=sys.stdout)
     
     @commands.command(name="findall")
     @commands.has_any_role("Floorgazer","Keyer","Wingman","Wingwoman")
@@ -337,7 +354,7 @@ class vouchSystem(commands.Cog):
             embed.add_field(name = "RSN - # of Vouches", value=list_vouches, inline=False)
             await ctx.send(embed=embed)
         except Exception as e:
-            await ctx.send(e)
+            print (e)
             await ctx.send("Couldn't print vouches")
 
     @commands.command(name="contextinfo")
