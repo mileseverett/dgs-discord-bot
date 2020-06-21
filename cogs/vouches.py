@@ -316,17 +316,20 @@ class vouchSystem(commands.Cog):
     @commands.command(name="vouchbuffer")
     async def viewVouchBuffer(self,ctx):
         try:
-            bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""),"vouches")
-            print(bufferData)
-            embed = discord.Embed(title="Vouches Buffer")
-            for k,v in bufferData.items():
-                if len(v["voucherInfo"]["reason"]) > 0:
-                    reason = v["voucherInfo"]["reason"]
-                else:
-                    reason = "None given"
-                vouchLine = self.vouchDict[abs(v["vouchInfo"]["rankValue"])] + v["voucherInfo"]["voucherName"] + " " + v["vouchInfo"]["vouchType"] + "ed " + string.capwords(v["vouchInfo"]["user"]) + "\n" + v["vouchInfo"]["vouchTimestamp"] + "\n" + "Reason: " + reason
-                embed.add_field(name=k, value=vouchLine, inline=False)
-            await ctx.send(embed=embed)
+            if self.whitelistCheck(ctx) == False:
+                await ctx.send("This command is not allowed in this channel.")
+            else:
+                bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""),"vouches")
+                print(bufferData)
+                embed = discord.Embed(title="Vouches Buffer")
+                for k,v in bufferData.items():
+                    if len(v["voucherInfo"]["reason"]) > 0:
+                        reason = v["voucherInfo"]["reason"]
+                    else:
+                        reason = "None given"
+                    vouchLine = self.vouchDict[abs(v["vouchInfo"]["rankValue"])] + v["voucherInfo"]["voucherName"] + " " + v["vouchInfo"]["vouchType"] + "ed " + string.capwords(v["vouchInfo"]["user"]) + "\n" + v["vouchInfo"]["vouchTimestamp"] + "\n" + "Reason: " + reason
+                    embed.add_field(name=k, value=vouchLine, inline=False)
+                await ctx.send(embed=embed)
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
@@ -334,18 +337,24 @@ class vouchSystem(commands.Cog):
     @commands.command(name="removevouch")
     async def removeVouch(self,ctx,vouchID:str):
         try:   
-            bufferHandling.removeBuffer(ctx.guild.name.replace(" ",""),"vouches",vouchID)
-            await ctx.send("Removed from buffer.")  
+            if self.whitelistCheck(ctx) == False:
+                await ctx.send("This command is not allowed in this channel.")
+            else:
+                bufferHandling.removeBuffer(ctx.guild.name.replace(" ",""),"vouches",vouchID)
+                await ctx.send("Removed from buffer.")  
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
 
     @commands.command(name="acceptallvouches")
     async def acceptAllVouches(self,ctx):
-        IDs = bufferHandling.getBufferIDs(ctx.guild.name.replace(" ",""),"vouches")
-        for x in IDs:
-            await self.acceptVouch(ctx,x, True)
-        await ctx.send("All done.")
+        if self.whitelistCheck(ctx) == False:
+            await ctx.send("This command is not allowed in this channel.")
+        else:
+            IDs = bufferHandling.getBufferIDs(ctx.guild.name.replace(" ",""),"vouches")
+            for x in IDs:
+                await self.acceptVouch(ctx,x, True)
+            await ctx.send("All done.")
 
     @commands.command(name="acceptvouch")
     async def acceptVouch(self,ctx,vouchID:str,silent=False):
