@@ -147,6 +147,7 @@ class vouchSystem(commands.Cog):
             return False
 
     @commands.command(name="updatingmessageinit")
+    @commands.has_any_role("Reviewer","Admin")
     async def updatingmessage(self, ctx):
         #delete the senders message
         usersMessage = ctx.message
@@ -173,6 +174,7 @@ class vouchSystem(commands.Cog):
 
 
     @commands.command(name="updatemessage")
+    @commands.has_any_role("Reviewer","Admin")
     async def updateMessage(self, ctx):
         #load server settings
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
@@ -338,6 +340,22 @@ class vouchSystem(commands.Cog):
         bufferHandling.addBuffer(ctx.guild.name.replace(" ",""), "vouches", bufferData)
         await ctx.send("Your vouch for " + user + " has been added to the queue to be reviewed by admins.")
 
+
+    @commands.command(name="renamevouchee")
+    @commands.has_any_role("Reviewer","Admin")
+    async def renameVouchee(self, ctx, user:str, newName:str):
+        if self.whitelistCheck(ctx) == False:
+            await ctx.send("This command is not allowed in this channel.")
+        
+        fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
+        vouches = jsonHandling.loadJSON(fname)
+        
+        data = vouches.pop(user.lower())
+        vouches[newName.lower()] = data
+
+        jsonHandling.dumpJSON(fname,vouches)
+
+        await ctx.send("Rename complete.")
 
     @commands.command(name="removeuser")
     @commands.has_any_role("Reviewer", "Admin")
