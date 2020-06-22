@@ -448,7 +448,7 @@ class vouchSystem(commands.Cog):
                             vouchers = vouchers + " - " + str(v["reason"]) + "\n"
                         else:
                             vouchers = vouchers + "\n"
-                    print("vouchers",vouchers)
+                    print("vouchers", vouchers)
                     embed.add_field(name="Vouchers", value=vouchers, inline=False)
 
                     #if there is antivouchers
@@ -464,7 +464,7 @@ class vouchSystem(commands.Cog):
                                 antivouchers = antivouchers + "\n"
                     else:
                         antivouchers = "None"
-                    print("antivouchers",antivouchers)
+                    print("antivouchers", antivouchers)
                     embed.add_field(name="Antivouchers", value=antivouchers, inline=False)
             except:
                 pass

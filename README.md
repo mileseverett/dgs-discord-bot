@@ -36,7 +36,7 @@ To clone:
 git clone https://github.com/mileseverett/dgs-discord-bot.git
 ```
 
-To run the bot just run bot.py. Code assuming the bot files are in your current directory:
+To run the bot locally for testing/developing just run bot.py. Code assuming the bot files are in your current directory:
 
 ```python
 pip install discord
