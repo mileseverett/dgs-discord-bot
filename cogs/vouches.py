@@ -25,10 +25,10 @@ class vouchSystem(commands.Cog):
         print("attempting to vouch")
         print("amount:",amount)
         if name in vouches.keys():
-            vouches[name]["vouches"] = max(vouches[name]["vouches"] + amount,0)
+            vouches[name]["vouches"] = max(vouches[name]["vouches"] + amount, 0)
         else:
             print("no vouches")
-            vouches[name] = {"vouches":max(amount,0),"vouchers":{},"antivouchers":{}}   
+            vouches[name] = {"vouches":max(amount, 0),"vouchers":{},"antivouchers":{}}   
         print("vouch successful")    
         return vouches
 
@@ -250,6 +250,7 @@ class vouchSystem(commands.Cog):
                 return
             print(acceptableVouch, vouchInfo)
             authorName = str(ctx.author.id)
+
             voucherInfo = {
                 "value":vouchInfo["rankValue"],
                 "reason":vouchReason[:-1],
@@ -260,13 +261,46 @@ class vouchSystem(commands.Cog):
                 "vouchInfo":vouchInfo,
                 "voucherInfo":voucherInfo
             }
+
             bufferHandling.addBuffer(ctx.guild.name.replace(" ", ""), "vouches", bufferData)
             await ctx.send("Your vouch for " + user + " has been added to the queue to be reviewed by admins.")
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
 
+    @commands.command(name="unvouch")
+    @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
+    async def unvouch(self, ctx, user:str):
+        if self.whitelistCheck(ctx) == False:
+            await ctx.send("Cannot do that in this channel")
+            return
+        try:
+            user = user.lower()
+            fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
+            vouches = jsonHandling.loadJSON(fname)
+            print(vouches)
+
+            authorName = str(ctx.author.id)
+
+            if user not in vouches.keys() or (user in vouches.keys() and authorName not in vouches[user]["vouchers"]):
+                await ctx.send("You haven't vouched them.")
+            
+            if user in vouches.keys() and authorName in vouches[user]["vouchers"]:
+                vouches[user]['vouches'] = vouches[user]['vouches'] - vouches[user]['vouchers'][authorName]['value']
+                if vouches[user]['vouches'] <= 0:
+                    ctx.send("Vouchee is at 0 or below - removing from vouch list")
+                    await self.removeUser(ctx, user)
+                else:
+                    del vouches[user]['vouchers'][authorName]
+                    jsonHandling.dumpJSON(fname, vouches)
+                    await ctx.send("Vouch successfully removed.")
+            
+        except Exception as e:
+            print(e)
+            traceback.print_exc(file=sys.stdout)
+
     @commands.command(name="adminvouch")
+    @commands.has_any_role("Reviewer", "Admin")
     async def adminVouch(self, ctx, voucher:int, user:str, vouchType:str, rankValue:int, reason:str):
         vouchType = vouchType.lower()
         if vouchType == "vouch":
@@ -306,6 +340,7 @@ class vouchSystem(commands.Cog):
 
 
     @commands.command(name="removeuser")
+    @commands.has_any_role("Reviewer", "Admin")
     async def removeUser(self, ctx, user:str):
         if self.whitelistCheck(ctx) == False:
                 await ctx.send("This command is not allowed in this channel.")
@@ -317,6 +352,7 @@ class vouchSystem(commands.Cog):
             await ctx.send(user + " was completely removed from the vouch list.")
 
     @commands.command(name="vouchbuffer")
+    @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def viewVouchBuffer(self, ctx):
         try:
             if self.whitelistCheck(ctx) == False:
@@ -341,18 +377,24 @@ class vouchSystem(commands.Cog):
             traceback.print_exc(file=sys.stdout)
 
     @commands.command(name="removevouch")
-    async def removeVouch(self, ctx, vouchID:str):
+    @commands.has_any_role("Reviewer", "Admin")
+    async def removeVouch(self, ctx, vouchID:str, silent = False):
         try:   
             if self.whitelistCheck(ctx) == False:
                 await ctx.send("This command is not allowed in this channel.")
             else:
                 bufferHandling.removeBuffer(ctx.guild.name.replace(" ",""), "vouches", vouchID)
-                await ctx.send("Removed from buffer.")  
+                if silent == False:
+                    await ctx.send("Removed from buffer.") 
+                else:
+                    return
+                
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
 
     @commands.command(name="acceptallvouches")
+    @commands.has_any_role("Reviewer", "Admin")
     async def acceptAllVouches(self, ctx):
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
@@ -364,8 +406,23 @@ class vouchSystem(commands.Cog):
                 for x in IDs:
                     await self.acceptVouch(ctx, x, True)
                 await ctx.send("All done.")
+    
+    @commands.command(name="rejectallvouches")
+    @commands.has_any_role("Reviewer", "Admin")
+    async def rejectAllVouches(self, ctx):
+        if self.whitelistCheck(ctx) == False:
+            await ctx.send("This command is not allowed in this channel.")
+        else:
+            IDs = bufferHandling.getBufferIDs(ctx.guild.name.replace(" ", ""), "vouches")
+            if not IDs:
+                await ctx.send("Nothing in the buffer!")
+            else:
+                for x in IDs:
+                    await self.removeVouch(ctx, x, True)
+                await ctx.send("All done.")
 
     @commands.command(name="acceptvouch")
+    @commands.has_any_role("Reviewer", "Admin")
     async def acceptVouch(self, ctx, vouchID:str, silent=False):
         try:
             #Message to be printed out at the end.
