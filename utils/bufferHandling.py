@@ -49,7 +49,7 @@ def addBuffer(serverName,bufferType,data):
     jsonHandling.dumpJSON(buffername,testBuffer)
     return
 
-def viewBuffer(serverName,bufferType,embedTitle,embedMessage):
+def viewBuffer(serverName, bufferType, embedTitle, embedMessage):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
     testBuffer = jsonHandling.loadJSON(buffername)
     embed=Embed(title=embedTitle)
@@ -58,7 +58,7 @@ def viewBuffer(serverName,bufferType,embedTitle,embedMessage):
         embed.add_field(name=k, value=v, inline=False)  
     return embed
 
-def removeBuffer(serverName,bufferType,bufferNo:int):
+def removeBuffer(serverName, bufferType, bufferNo:int):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
     testBuffer = jsonHandling.loadJSON(buffername)   
     if bufferNo == 0:
@@ -69,12 +69,12 @@ def removeBuffer(serverName,bufferType,bufferNo:int):
     jsonHandling.dumpJSON(buffername,testBuffer)
     return
 
-def getAllBufferData(serverName,bufferType):
+def getAllBufferData(serverName, bufferType):
     buffername = "buffers/" + serverName + bufferType +  ".json"
     bufferData = jsonHandling.loadJSON(buffername)
     return bufferData
 
-def getBufferData(serverName,bufferType,bufferNo:int):
+def getBufferData(serverName, bufferType, bufferNo:int):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
     if os.path.exists(buffername):
         testBuffer = jsonHandling.loadJSON(buffername)
@@ -82,7 +82,7 @@ def getBufferData(serverName,bufferType,bufferNo:int):
         testBuffer = {}   
     return testBuffer[bufferNo]
 
-def getBufferIDs(serverName,bufferType):
+def getBufferIDs(serverName, bufferType):
     buffername = "buffers/" + serverName + bufferType +  ".json"    
     if os.path.exists(buffername):
         testBuffer = jsonHandling.loadJSON(buffername)

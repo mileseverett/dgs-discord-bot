@@ -14,7 +14,7 @@ class adminSystem(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def whitelistCheck(self,ctx):
+    def whitelistCheck(self, ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
         print(settings)
@@ -26,7 +26,7 @@ class adminSystem(commands.Cog):
 
     @commands.command(name="whitelistchannel")
     @commands.has_any_role("Admin",":)")
-    async def whitelistChannel(self,ctx):
+    async def whitelistChannel(self, ctx):
         try:
             fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
 
@@ -50,7 +50,7 @@ class adminSystem(commands.Cog):
             
     @commands.command(name="removewhitelistchannel")
     @commands.has_any_role("Admin",":)")
-    async def removeWhitelistChannel(self,ctx):
+    async def removeWhitelistChannel(self, ctx):
         try:
             fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
             print(fname)
@@ -81,7 +81,7 @@ class adminSystem(commands.Cog):
 
     @commands.command(name="channelcheck")
     @commands.has_any_role("Admin",":)")
-    async def channelCheck(self,ctx):
+    async def channelCheck(self, ctx):
         if self.whitelistCheck(ctx) == True:
             await ctx.send("Channel is whitelisted")
         else:
@@ -89,7 +89,7 @@ class adminSystem(commands.Cog):
 
 
     @commands.Cog.listener()
-    async def on_command_error(self,ctx,error):
+    async def on_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send('You do not have the correct role for this command.')
 
