@@ -10,23 +10,25 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with a bit of
 - !vouch: Used to vouch a 2-stripe
 - !antivouch: Used to anti-vouch a 2-stripe
 - !vouchinfo: Shows all of the vouches and anti-vouches for a given 2-stripe, with reasons where applicable. This is the same as the public command, but gives more information in whitelisted channels.
+- !unvouch: Remove a vouch
 
 #### Administrative commands (Reviewer+)
 ##### Vouches
 - !vouchbuffer: See all vouches needing approval
 - !acceptvouch: Accept a singular vouch (by vouchID)
 - !acceptallvouches: Accept all current vouches in the buffer
+- !rejectallvouches: Remove all current vouches in the buffer
 - !updatingmessageinit: This initalizes a table to display vouches
 - !updatemessage: Updates the table of vouches to the most current version of vouches
 - !removeuser: Removes all of a user's vouches
 - !removevouch: Removes a specific vouch for a user
 - !adminvouch: Lets admins populate a vouch for someone else. Useful for populating vouches prior to the bot implementation.
+- !renamevouchee: Allows you to change the name of a vouchee
 
 ##### Whitelisting
 - !channelcheck: Check if the current channel is "whitelisted" (allows all Wing+ commands)
 - !removewhitelistchannel: Makes the current channel not whitelisted
 - !whitelistchannel: Makes the current channel whitelisted
-
 
 ## Contributing
 If you want to help contribute you can clone the repo and make local changes. You can run the bot locally to test your changes (we have an existing discord server or you can make your own), and the bot runs off of AWS. If you need access to the "production" version contact Miles or EB.
