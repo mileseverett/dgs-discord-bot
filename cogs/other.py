@@ -18,7 +18,6 @@ class otherSystem(commands.Cog):
         self.bot = bot
 
     @commands.command(name="vis")
-    @commands.has_any_role("Admin",":)")
     async def vis(self, ctx):
         try:
             url = "http://www.runeguide.info/alt1/viswax/api/getVisWaxCombo.php"
