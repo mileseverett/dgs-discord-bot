@@ -37,12 +37,12 @@ class otherSystem(commands.Cog):
                 s22other= data[k]["slot2_2_other"]
                 s23 = data[k]["slot2_3_best"] 
                 s23other= data[k]["slot2_3_other"]
-                if len(s1other[0]) > 0:
+                if s1other:
                     s1test = ""
                     for x in s1other:
                         s1test = s1test + " " +  runes[x["id"]] + " " + x["vis"] + "\n"
                 else:
-                    s21test = "None"
+                    s1test = "None"
                 if len(s21other[0]) > 0:
                     s21test = ""
                     for x in s21other:
