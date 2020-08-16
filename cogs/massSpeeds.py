@@ -11,7 +11,7 @@ class massSpeeds(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def printTeams(self, finalTeams, leftoverList):
+    def printTeams(self, ctx, finalTeams, leftoverList):
         for k,v in finalTeams.items():
             print(k, "is:", v)
         print("Leftovers for this round are:", ', '.join(leftoverList))
