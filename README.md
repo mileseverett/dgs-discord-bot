@@ -5,6 +5,7 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with a bit of
 
 #### Public commands
 - !vouchinfo: Shows the number of vouches for a specific person (when used in a non-whitelisted channel)
+- !source: Gives the link to the GitHub page
 
 #### Vouch/Anti-vouch commands (any Wing+)
 - !vouch: Used to vouch a 2-stripe
@@ -29,6 +30,9 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with a bit of
 - !channelcheck: Check if the current channel is "whitelisted" (allows all Wing+ commands)
 - !removewhitelistchannel: Makes the current channel not whitelisted
 - !whitelistchannel: Makes the current channel whitelisted
+
+#### Mass Speeds
+- !runRandomMassSpeeds: Creates weighted randomized teams for the people currently in the mass speeds queue
 
 ## Contributing
 If you want to help contribute you can clone the repo and make local changes. You can run the bot locally to test your changes (we have an existing discord server or you can make your own), and the bot runs off of AWS. If you need access to the "production" version contact Miles or EB.
