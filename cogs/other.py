@@ -83,6 +83,10 @@ class otherSystem(commands.Cog):
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send('You do not have the correct role for this command.')
+    
+    @commands.command(name="source")
+    async def source(self, ctx):
+        print("Source is: " + "https://github.com/mileseverett/dgs-discord-bot")
 
 def setup(bot):
     bot.add_cog(otherSystem(bot))
