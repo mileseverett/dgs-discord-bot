@@ -23,21 +23,6 @@ class massSpeeds(commands.Cog):
         # Assumes participants is a dictionary of the form {"RSN":"Rank"}
         # Where "Rank" is a number from 1 to 6
         # RSN is just what appears in the output
-        # below is sample data!!
-        if participants is Null:
-            print("hi")
-
-    def printTeams(finalTeams, leftoverList):
-        for k,v in finalTeams.items():
-            print(k, "is:", v)
-        print("Leftovers for this round are:", ', '.join(leftoverList))
-        return 1
-
-    def runRandomMassSpeeds(self, ctx, participants):
-        # Assumes participants is a dictionary of the form {"RSN":"Rank"}
-        # Where "Rank" is a number from 1 to 6
-        # RSN is just what appears in the output
-        # below is sample data!!
         
         numTeams = math.floor(len(participants)/5)
         numLeftover = len(participants) - (5*numTeams)
@@ -66,6 +51,6 @@ class massSpeeds(commands.Cog):
 
         printTeams(finalTeams, leftoverList)
         return finalTeams, leftoverList
-
+        
 def setup(bot):
     bot.add_cog(massSpeeds(bot))
