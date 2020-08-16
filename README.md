@@ -5,6 +5,7 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with a bit of
 
 #### Public commands
 - !vouchinfo: Shows the number of vouches for a specific person (when used in a non-whitelisted channel)
+- !source: Gives the link to the GitHub page
 
 #### Vouch/Anti-vouch commands (any Wing+)
 - !vouch: Used to vouch a 2-stripe
