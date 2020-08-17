@@ -59,7 +59,7 @@ class massSpeeds(commands.Cog):
             finalTeams.update({"Team " + str(i + 1): []})
         teamWeight = np.zeros(numTeams)
 
-        for k,v in sorted(participants.items(), key=lambda item: item[1], reverse = True):
+        for k,v in sorted(participants.items(), key=lambda item: (item[1], random.random()), reverse = True):
             maskTeam = [0] * numTeams
             for i in range(len(finalTeams)):
                 if len(list(finalTeams.values())[i]) == 5:
