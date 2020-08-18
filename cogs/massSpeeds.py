@@ -15,7 +15,9 @@ class massSpeeds(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.messageID = None
+        self.teamMessages = []
         self.client = discord.Client()
+
 
     def printTeams(self, finalTeams, leftoverList):
         for k,v in finalTeams.items():
@@ -40,8 +42,6 @@ class massSpeeds(commands.Cog):
         else: 
             value = 1
         return value
-
-
 
     def runRandomMassSpeeds(self, participants):
         # Assumes participants is a dictionary of the form {"RSN":"Rank"}
@@ -76,15 +76,28 @@ class massSpeeds(commands.Cog):
         self.printTeams(finalTeams, leftoverList)
         return finalTeams, leftoverList
 
+    def joinMassSpeeds(self,guild,member):
+        MSfname = "massSpeeds/" + guild.name.replace(" ","") + ".json"
+        players = jsonHandling.loadJSON(MSfname)
+        players[str(member.id)] = 0
+        jsonHandling.dumpJSON(MSfname,players)
+
+    def leaveMassSpeeds(self,guild,member):    
+        MSfname = "massSpeeds/" + guild.name.replace(" ","") + ".json"
+        players = jsonHandling.loadJSON(MSfname)
+        players.pop(str(member.id))
+        jsonHandling.dumpJSON(MSfname,players)
 
     @commands.command(name="msstart")
     @commands.has_any_role("Mass Speeds Admin")
     async def startMassSpeedsSession(self,ctx):
+        usersMessage = ctx.message
+        await usersMessage.delete()
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
         if "msActive" in settings.keys():
             if settings["msActive"] == False:
-                message = await ctx.send("React to this dumdums")
+                message = await ctx.send("React to this message to join the mass speeds session.")
                 self.messageID = (message)
                 await message.add_reaction("<a:EB:744967488751665303>")
                 settings["msActive"] = True
@@ -113,26 +126,25 @@ class massSpeeds(commands.Cog):
             settings["msActive"] = False
 
         MSfname = "massSpeeds/" + ctx.guild.name.replace(" ","") + ".json"
+        players = jsonHandling.loadJSON(MSfname)
         jsonHandling.dumpJSON(MSfname,{})
 
         jsonHandling.dumpJSON(fname,settings)
+        for x in players.keys():
+            member = ctx.guild.get_member(int(x))
+            role = get(ctx.guild.roles, name="Mass Speeds")
+            if role in member.roles: 
+                await member.remove_roles(role)
+
+        if len(self.teamMessages) > 0:
+            for x in range(len(self.teamMessages)):
+                msg = self.teamMessages.pop()
+                await msg.delete()
         
-
-
-    def joinMassSpeeds(self,guild,member):
-        MSfname = "massSpeeds/" + guild.name.replace(" ","") + ".json"
-        players = jsonHandling.loadJSON(MSfname)
-        players[str(member.id)] = 0
-        jsonHandling.dumpJSON(MSfname,players)
-
-    def leaveMassSpeeds(self,guild,member):    
-        MSfname = "massSpeeds/" + guild.name.replace(" ","") + ".json"
-        players = jsonHandling.loadJSON(MSfname)
-        players.pop(str(member.id))
-        jsonHandling.dumpJSON(MSfname,players)
-
     @commands.command("msteams")
     async def formTeams(self,ctx):
+        usersMessage = ctx.message
+        await usersMessage.delete()
         MSfname = "massSpeeds/" + ctx.guild.name.replace(" ","") + ".json"
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
@@ -144,6 +156,12 @@ class massSpeeds(commands.Cog):
             await ctx.send("No mass speeds session in progress. <a:EB:744967488751665303> (MS Session = False)")
             return     
 
+        if len(self.teamMessages) > 0:
+            for x in range(len(self.teamMessages)):
+                msg = self.teamMessages.pop()
+                await msg.delete()
+
+
         players = jsonHandling.loadJSON(MSfname)
 
         MSrole = get(ctx.guild.roles, name="Mass Speeds")
@@ -153,18 +171,43 @@ class massSpeeds(commands.Cog):
 
         for x in players.keys():
             member = ctx.guild.get_member(int(x))
-            print (member.roles)
             if MSrole in member.roles:
                 value = self.rankValue(getRoles(member.roles))
                 playersValue[member.name] = value
             else:
                 toBeRemoved.append(x)
 
-        print (players)
+        for x in toBeRemoved:
+            players.pop(str(x))
 
-        a, b = self.runRandomMassSpeeds(playersValue)
-        await ctx.send(a)
-        await ctx.send(b)
+        jsonHandling.dumpJSON(MSfname,players)
+
+
+        teams, leftovers = self.runRandomMassSpeeds(playersValue)
+        
+        
+        for k,v in teams.items():
+            team = discord.Embed()
+            message = ""
+            for x in v:
+                message = message + x + "\n"
+            
+            team.add_field(name=k, value=message, inline=False)
+            messageSent = await ctx.send(embed=team)
+            self.teamMessages.append(messageSent)
+        
+        message = ""
+        if len(leftovers) > 1:
+            for x in leftovers:
+                message = message + x + "\n"
+        else:
+            message = "None"
+        leftovers = discord.Embed()
+        leftovers.add_field(name="Leftovers", value=message)
+        messageSent = await ctx.send(embed=leftovers)
+        self.teamMessages.append(messageSent)
+
+
 
     @commands.command("ms")
     async def massSpeeds(self,ctx):
@@ -185,10 +228,21 @@ class massSpeeds(commands.Cog):
             playersText = playersText + x + "\n"
 
         await ctx.send(playersText)
-        
+
+    @commands.command("msreset")
+    async def resetMassSpeeds(self,ctx):
+        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
+        settings = jsonHandling.loadJSON(fname)
+        settings["msActive"] = False
+        jsonHandling.dumpJSON(fname,settings)
+
+        MSfname = "massSpeeds/" + ctx.guild.name.replace(" ","") + ".json"
+        jsonHandling.dumpJSON(MSfname,{})
+
+
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self,payload):
-
         if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != 722758078310776832:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
@@ -200,7 +254,6 @@ class massSpeeds(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self,payload):
-
         if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != 722758078310776832:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
