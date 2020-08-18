@@ -7,8 +7,8 @@ import sys, traceback
 from discord import Embed
 from utils import jsonHandling
 
-def getRoles(ctx):
+def getRoles(allRoles):
     roles = []
-    for x in ctx.author.roles:
+    for x in allRoles:
         roles.append(x.name)
     return roles
