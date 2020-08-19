@@ -1,4 +1,4 @@
-# DGS Discored Bot
+# DGS Discord Bot
 A discord bot to serve all of DGS's needs. Created mostly by Miles with help from EB and currently maintained by Miles/EB.
 
 ## Functions
