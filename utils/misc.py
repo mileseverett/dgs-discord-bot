@@ -12,3 +12,9 @@ def getRoles(allRoles):
     for x in allRoles:
         roles.append(x.name)
     return roles
+
+def createFolder(directory):
+    if not os.path.exists(directory):
+            os.makedirs(directory)
+    return
+

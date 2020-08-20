@@ -20,6 +20,7 @@ class vouchSystem(commands.Cog):
                 2:"<:keyer:722167334357303368>",
                 3:"<:floorgazer:722167334667550741>"
             }
+        createFolder("vouches")
 
     def attemptVouch(self, name, amount, vouches):
         print("attempting to vouch")

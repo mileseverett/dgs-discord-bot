@@ -2,12 +2,13 @@ import math
 import random
 import numpy as np
 from pprint import pprint
+import os
 
 import discord
 from discord.ext import commands
 from discord.utils import get
 
-from utils.misc import getRoles
+from utils.misc import getRoles, createFolder
 from utils import jsonHandling
 
 class massSpeeds(commands.Cog):
@@ -18,6 +19,7 @@ class massSpeeds(commands.Cog):
         self.teamMessages = []
         self.client = discord.Client()
 
+        createFolder("massSpeeds")
 
     def printTeams(self, finalTeams, leftoverList):
         for k,v in finalTeams.items():

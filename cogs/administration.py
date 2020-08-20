@@ -13,6 +13,8 @@ class adminSystem(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
+        createFolder("guildsettings")
+        createFolder("buffers")
 
     def whitelistCheck(self, ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
