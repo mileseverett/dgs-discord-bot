@@ -144,6 +144,7 @@ class massSpeeds(commands.Cog):
                 await msg.delete()
         
     @commands.command("msteams")
+    @commands.has_any_role("Mass Speeds Admin")
     async def formTeams(self,ctx):
         usersMessage = ctx.message
         await usersMessage.delete()
@@ -210,6 +211,7 @@ class massSpeeds(commands.Cog):
         self.teamMessages.append(messageSent)
 
     @commands.command("msreset")
+    @commands.has_any_role("Mass Speeds Admin")
     async def resetMassSpeeds(self,ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
@@ -218,6 +220,33 @@ class massSpeeds(commands.Cog):
 
         MSfname = "massSpeeds/" + ctx.guild.name.replace(" ","") + ".json"
         jsonHandling.dumpJSON(MSfname,{})
+
+    @commands.command("msforcecheck")
+    @commands.has_any_role("Mass Speeds Admin")
+    async def forceCheckRole(self,ctx):
+        usersMessage = ctx.message
+        await usersMessage.delete()
+        MSfname = "massSpeeds/" + ctx.guild.name.replace(" ","") + ".json"
+        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
+        settings = jsonHandling.loadJSON(fname)
+        if "msActive" not in settings.keys():
+            await ctx.send("No mass speeds session in progress. <a:EB:744967488751665303> (Not in settings)")
+            return
+
+        if settings["msActive"] == False:
+            await ctx.send("No mass speeds session in progress. <a:EB:744967488751665303> (MS Session = False)")
+            return
+
+        players = {}
+
+        MSrole = get(ctx.guild.roles, name="Mass Speeds")
+        
+        for x in ctx.guild.members:
+            if MSrole in x.roles and x.id != 722758078310776832 and x.id != 718483095262855280:
+                players[x.id] = 0
+
+        jsonHandling.dumpJSON(MSfname,players)
+        await ctx.send(players)
 
 
 
