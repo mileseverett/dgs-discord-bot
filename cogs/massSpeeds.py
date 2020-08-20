@@ -209,28 +209,6 @@ class massSpeeds(commands.Cog):
         messageSent = await ctx.send(embed=leftovers)
         self.teamMessages.append(messageSent)
 
-
-
-    @commands.command("ms")
-    async def massSpeeds(self,ctx):
-        MSfname = "massSpeeds/" + ctx.guild.name.replace(" ","") + ".json"
-        fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
-        settings = jsonHandling.loadJSON(fname)
-        if "msActive" not in settings.keys():
-            await ctx.send("No mass speeds session in progress. <a:EB:744967488751665303> (Not in settings)")
-            return
-
-        if settings["msActive"] == False:
-            await ctx.send("No mass speeds session in progress. <a:EB:744967488751665303> (MS Session = False)")
-            return
-
-        players = jsonHandling.loadJSON(MSfname)
-        playersText = ""
-        for x in players.keys():
-            playersText = playersText + x + "\n"
-
-        await ctx.send(playersText)
-
     @commands.command("msreset")
     async def resetMassSpeeds(self,ctx):
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
@@ -245,7 +223,7 @@ class massSpeeds(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self,payload):
-        if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != 722758078310776832:
+        if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != 722758078310776832 and payload.user_id != 718483095262855280:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
             role = get(guild.roles, name="Mass Speeds")
@@ -256,7 +234,7 @@ class massSpeeds(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self,payload):
-        if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != 722758078310776832:
+        if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != 722758078310776832 and payload.user_id != 718483095262855280:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
             role = get(guild.roles, name="Mass Speeds")
