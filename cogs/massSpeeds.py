@@ -30,11 +30,11 @@ class massSpeeds(commands.Cog):
     def rankValue(self, roles):
         value = 0
         if "Floorgazer" in roles:
-            value = 8
+            value = 7
         elif "Keyer" in roles:
-            value = 6
+            value = 5
         elif "Wingman" in roles or "Wingwoman" in roles:
-            value = 4
+            value = 3
         elif "3S" in roles:
             value = 2
         elif "2S" in roles:
