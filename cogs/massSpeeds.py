@@ -47,7 +47,7 @@ class massSpeeds(commands.Cog):
 
     def runRandomMassSpeeds(self, participants):
         # Assumes participants is a dictionary of the form {"RSN":"Rank"}
-        # Where "Rank" is a number from 1 to 6
+        # Where "Rank" is a number from ranKValue
         # RSN is just what appears in the output
         
         numTeams = math.floor(len(participants)/5)
