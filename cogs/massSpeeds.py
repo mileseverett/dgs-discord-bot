@@ -200,7 +200,7 @@ class massSpeeds(commands.Cog):
             self.teamMessages.append(messageSent)
         
         message = ""
-        if len(leftovers) > 1:
+        if len(leftovers) > 0:
             for x in leftovers:
                 message = message + x + "\n"
         else:
