@@ -22,7 +22,7 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with help fro
 - $updatingmessageinit: This initalizes a table to display vouches
 - $updatemessage: Updates the table of vouches to the most current version of vouches
 - $removeuser: Removes all of a user's vouches
-- $removevouch: Removes a specific vouch for a user
+- $removebuffervouch: Removes a specific vouch from the buffer
 - $adminvouch: Lets admins populate a vouch for someone else. Useful for populating vouches prior to the bot implementation.
 - $renamevouchee: Allows you to change the name of a vouchee
 
