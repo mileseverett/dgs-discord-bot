@@ -23,15 +23,14 @@ class vouchSystem(commands.Cog):
             }
         createFolder("vouches")
 
-    def attemptVouch(self, name, amount, vouches):
+    def addVouchee(self, name, vouches):
         print("attempting to vouch")
-        print("amount:",amount)
         if name in vouches.keys():
-            vouches[name]["vouches"] = max(vouches[name]["vouches"] + amount, 0)
+            pass
         else:
-            print("no vouches")
-            vouches[name] = {"vouches":max(amount, 0),"vouchers":{},"antivouchers":{}}   
-        print("vouch successful")    
+            print("no vouches - adding to JSON")
+            vouches[name] = {"vouches":0,"vouchers":{},"antivouchers":{}}   
+        print("added vouchee successfully")
         return vouches
 
     def vouchValue(self, roles):
@@ -73,7 +72,6 @@ class vouchSystem(commands.Cog):
         if self.checkBuffer(ctx, user) == False:
             return False, {"reason":"A vouch from you for this user is already in the buffer awaiting approval."}
 
-        changeBy = 0
         anti = 1
         if vouchType == "vouch":
             checkOppositeDict = "antivouchers"
@@ -85,47 +83,21 @@ class vouchSystem(commands.Cog):
 
         roles = self.getRoles(ctx)
         rankValue = self.vouchValue(roles)
-        antiModifier = 0
-        #check if this person has vouched/antivouched the user in the past and at what value
-        try: 
-            prevValue = vouches[user][checkDict][str(ctx.author.id)]["value"]
-        #set it to something high
-        except:
-            prevValue = 1000
-            traceback.print_exc(file=sys.stdout)
             
         #check if this user has already vouched AND at the current value
         try:  
-            if str(ctx.author.id) in vouches[user][checkDict] and rankValue == prevValue:
+            if str(ctx.author.id) in vouches[user][checkDict] and rankValue == vouches[user][checkDict][str(ctx.author.id)]["value"]:
                 return False, {"reason":"Already vouched this user at current rank value."}
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
             pass
-        
-        #check to see if this user is flipping their vouch/anti
-        try:
-            print("oppositeDict=", checkOppositeDict)
-            if str(ctx.author.id) in vouches[user][checkOppositeDict]:
-                changeBy = vouches[user][checkOppositeDict][str(ctx.author.id)]["value"] 
-                print("prevValue", prevValue)
-        except Exception as e:
-            print(e) 
-        print("values", rankValue, prevValue)
-        try:
-            #check if vouch is an update or not
-            if str(ctx.author.id) in vouches[user][checkDict] and rankValue > prevValue:
-                changeBy = vouches[user][checkDict][str(ctx.author.id)]["value"]          
-        except Exception as ಠ_ಠ:
-            print(ಠ_ಠ)
-            traceback.print_exc(file=sys.stdout)
 
         now = datetime.now()
 
         vouchInfo = {
             "user":user,
             "rankValue":rankValue,
-            "changeBy":(changeBy + rankValue)*anti,
             "vouchType":vouchType,
             "vouchTimestamp":now.strftime("%d/%m/%Y, %H:%M:%S")
         }       
@@ -151,6 +123,7 @@ class vouchSystem(commands.Cog):
     @commands.command(name="updatingmessageinit")
     @commands.has_any_role("Reviewer","Admin")
     async def updatingmessage(self, ctx):
+        print("------------------------------ beginning updatingmessage() ------------------------------")
         #delete the senders message
         usersMessage = ctx.message
         await usersMessage.delete()
@@ -173,11 +146,13 @@ class vouchSystem(commands.Cog):
         
         #save details
         jsonHandling.dumpJSON(fname, settings)
+        print("------------------------------ ending updatingmessage() ------------------------------")
 
 
     @commands.command(name="updatemessage")
     @commands.has_any_role("Reviewer","Admin")
     async def updateMessage(self, ctx):
+        print("------------------------------ beginning updateMessage() ------------------------------")
         #load server settings
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
@@ -195,11 +170,13 @@ class vouchSystem(commands.Cog):
         
         #edit the message with the new embed
         await message.edit(embed=newmessage)
+        print("------------------------------ ending updateMessage() ------------------------------")
 
 
     @commands.command(name="vouch")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
     async def vouch(self, ctx, user:str, *argv):
+        print("------------------------------ beginning vouch() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("Cannot do that in this channel")
             return
@@ -219,7 +196,7 @@ class vouchSystem(commands.Cog):
                 "value":vouchInfo["rankValue"],
                 "reason":vouchReason[:-1],
                 "voucher":authorName,
-                "voucherName":ctx.author.name    
+                "voucherName":ctx.author.name
             }
 
             bufferData = {
@@ -232,10 +209,12 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+        print("------------------------------ ending vouch() ------------------------------")
         
     @commands.command(name="antivouch")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
     async def antivouch(self, ctx, user:str, *argv):
+        print("------------------------------ beginning antivouch() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("Cannot do that in this channel")
             return
@@ -271,10 +250,12 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+        print("------------------------------ ending antivouch() ------------------------------")
 
     @commands.command(name="unvouch")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
     async def unvouch(self, ctx, user:str):
+        print("------------------------------ beginning unvouch() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("Cannot do that in this channel")
             return
@@ -302,22 +283,19 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+        
+        print("------------------------------ ending unvouch() ------------------------------")
 
     @commands.command(name="adminvouch")
     @commands.has_any_role("Reviewer", "Admin")
     async def adminVouch(self, ctx, voucher:int, user:str, vouchType:str, rankValue:int, reason:str):
+        print("------------------------------ beginning adminVouch() ------------------------------")
         vouchType = vouchType.lower()
-        if vouchType == "vouch":
-            anti = 1
-        elif vouchType == "antivouch":
-            anti = -1
-        
         now = datetime.now()
 
         vouchInfo = {
             "user":user.lower(),
             "rankValue":rankValue,
-            "changeBy":rankValue * anti,
             "vouchType":vouchType,
             "vouchTimestamp":now.strftime("%d/%m/%Y, %H:%M:%S")
         }
@@ -341,11 +319,12 @@ class vouchSystem(commands.Cog):
 
         bufferHandling.addBuffer(ctx.guild.name.replace(" ",""), "vouches", bufferData)
         await ctx.send("Your vouch for " + user + " has been added to the queue to be reviewed by admins.")
-
+        print("------------------------------ ending adminVouch() ------------------------------")
 
     @commands.command(name="renamevouchee")
     @commands.has_any_role("Reviewer","Admin")
     async def renameVouchee(self, ctx, user:str, newName:str):
+        print("------------------------------ beginning renameVouchee() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
         
@@ -358,10 +337,12 @@ class vouchSystem(commands.Cog):
         jsonHandling.dumpJSON(fname,vouches)
 
         await ctx.send("Rename complete.")
+        print("------------------------------ ending renameVouchee() ------------------------------")
 
     @commands.command(name="removeuser")
     @commands.has_any_role("Reviewer", "Admin")
     async def removeUser(self, ctx, user:str):
+        print("------------------------------ beginning viewVouchBuffer() ------------------------------")
         if self.whitelistCheck(ctx) == False:
                 await ctx.send("This command is not allowed in this channel.")
         else:
@@ -370,10 +351,12 @@ class vouchSystem(commands.Cog):
             del vouches[user.lower()]
             jsonHandling.dumpJSON(fname, vouches)
             await ctx.send(user + " was completely removed from the vouch list.")
+        print("------------------------------ ending viewVouchBuffer() ------------------------------")
 
     @commands.command(name="vouchbuffer")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def viewVouchBuffer(self, ctx):
+        print("------------------------------ beginning viewVouchBuffer() ------------------------------")
         try:
             if self.whitelistCheck(ctx) == False:
                 await ctx.send("This command is not allowed in this channel.")
@@ -395,10 +378,12 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+        print("------------------------------ ending viewVouchBuffer() ------------------------------")
 
-    @commands.command(name="removevouch")
+    @commands.command(name="removebuffervouch")
     @commands.has_any_role("Reviewer", "Admin")
     async def removeVouch(self, ctx, vouchID:str, silent = False):
+        print("------------------------------ beginning removeVouch() ------------------------------")
         try:   
             if self.whitelistCheck(ctx) == False:
                 await ctx.send("This command is not allowed in this channel.")
@@ -412,10 +397,13 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+        
+        print("------------------------------ ending removeVouch() ------------------------------")
 
     @commands.command(name="acceptallvouches")
     @commands.has_any_role("Reviewer", "Admin")
     async def acceptAllVouches(self, ctx):
+        print("------------------------------ beginning acceptAllVouches() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
         else:
@@ -426,10 +414,12 @@ class vouchSystem(commands.Cog):
                 for x in IDs:
                     await self.acceptVouch(ctx, x, True)
                 await ctx.send("All done.")
+        print("------------------------------ ending acceptAllVouches() ------------------------------")
     
     @commands.command(name="rejectallvouches")
     @commands.has_any_role("Reviewer", "Admin")
     async def rejectAllVouches(self, ctx):
+        print("------------------------------ beginning rejectAllVouches() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
         else:
@@ -440,11 +430,13 @@ class vouchSystem(commands.Cog):
                 for x in IDs:
                     await self.removeVouch(ctx, x, True)
                 await ctx.send("All done.")
+        print("------------------------------ ending rejectAllVouches() ------------------------------")
 
     @commands.command(name="acceptvouch")
     @commands.has_any_role("Reviewer", "Admin")
     async def acceptVouch(self, ctx, vouchID:str, silent=False):
         try:
+            print("------------------------------ beginning acceptVouch() ------------------------------")
             #Message to be printed out at the end.
             message = "Vouch complete!"
             #get data for this vouchID
@@ -453,23 +445,41 @@ class vouchSystem(commands.Cog):
             fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
             vouches = jsonHandling.loadJSON(fname)
             #add the vouch to the vouch datastore
-            vouches = self.attemptVouch(vouchData["vouchInfo"]["user"],vouchData["vouchInfo"]["changeBy"],vouches)          
+            vouches = self.addVouchee(vouchData["vouchInfo"]["user"],vouches)
            
+            # Remove any instances of this person already vouching/anti'ing the vouchee
+            # We will update with their new information (new vouch/anti and rank value)
+            try:
+                del vouches[vouchData["vouchInfo"]["user"]]["antivouchers"][vouchData["voucherInfo"]["voucher"]]
+                print("removing exisiting antivouch entry")
+            except:
+                pass
+
+            try:
+                del vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]]
+                print("removing exisiting vouch entry")
+            except:
+                pass
+            
             #add the voucher info to the vouch datastore
             #if it's a vouch
             if vouchData["vouchInfo"]["vouchType"] == "vouch":
                 vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
-                try:
-                    del vouches[vouchData["vouchInfo"]["user"]]["antivouchers"][vouchData["voucherInfo"]["voucher"]]
-                except:
-                    pass
+                
             #if it's an antivouch
             elif vouchData["vouchInfo"]["vouchType"] == "antivouch":
                 vouches[vouchData["vouchInfo"]["user"]]["antivouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
-                try:
-                    del vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]]
-                except:
-                    pass
+            
+            # Update the number of vouches
+            numVouches = 0
+            for voucher in vouches[vouchData["vouchInfo"]["user"]]['vouchers']:
+                numVouches += vouches[vouchData["vouchInfo"]["user"]]['vouchers'][voucher]['value']
+            
+            for antivoucher in vouches[vouchData["vouchInfo"]["user"]]['antivouchers']:
+                numVouches -= vouches[vouchData["vouchInfo"]["user"]]['antivouchers'][antivoucher]['value']
+            
+            # Add to dict
+            vouches[vouchData["vouchInfo"]["user"]]["vouches"] = max(numVouches, 0)
 
             #check if user has been vouched to 0 and remove if so
             if vouches[vouchData["vouchInfo"]["user"]]["vouches"] == 0:
@@ -486,6 +496,7 @@ class vouchSystem(commands.Cog):
                 await ctx.send(message)
             else:
                 return
+            print("------------------------------ ending acceptVouch() ------------------------------")
         except KeyError:
             await ctx.send("No vouch with ID:"+vouchID  + " exists in the buffer.")
         except Exception as e:
@@ -497,7 +508,7 @@ class vouchSystem(commands.Cog):
     @commands.command(name="vouchinfo")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def vouchInfo(self, ctx, user:str):
-
+        print("------------------------------ begining vouchInfo() ------------------------------")
         fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
         if os.path.exists(fname):
             vouches = jsonHandling.loadJSON(fname)
@@ -552,10 +563,13 @@ class vouchSystem(commands.Cog):
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+        
+        print("------------------------------ ending vouchInfo() ------------------------------")
 
     @commands.command(name="allvouches")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def allVouches(self, ctx, silent=False):
+        print("------------------------------ beginning allVouches() ------------------------------")
         try:
             fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
             if os.path.exists(fname):
@@ -579,6 +593,8 @@ class vouchSystem(commands.Cog):
             print(e)
             traceback.print_exc(file=sys.stdout)
             await ctx.send("Couldn't printvouches")
+        
+        print("------------------------------ ending allVouches() ------------------------------")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
