@@ -34,7 +34,7 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with help fro
 #### Mass Speeds
 - $msstart: Initialize a mass speeds session. Will make a message that can be reacted to.
 - $msend: Ends the current mass speeds session.
-- $msteams: Generates and outputs teams.
+- $msteams: Generates and outputs weighted randomized teams based on DGS rank.
 
 ## Contributing
 If you want to help contribute you can clone the repo and make local changes. You can run the bot locally to test your changes (we have an existing discord server or you can make your own), and the bot runs off of AWS. If you need access to the "production" version contact Miles or EB.
