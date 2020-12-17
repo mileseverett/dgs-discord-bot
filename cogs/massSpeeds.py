@@ -176,7 +176,10 @@ class massSpeeds(commands.Cog):
             member = ctx.guild.get_member(int(x))
             if MSrole in member.roles:
                 value = self.rankValue(getRoles(member.roles))
-                playersValue[member.nick] = value
+                if member.nick == None:
+                    playersValue[member.name] = value
+                else:
+                    playersValue[member.nick] = value
             else:
                 toBeRemoved.append(x)
 
