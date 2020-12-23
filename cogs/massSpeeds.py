@@ -3,7 +3,6 @@ import random
 import numpy as np
 from pprint import pprint
 import os
-
 import discord
 from discord.ext import commands
 from discord.utils import get
