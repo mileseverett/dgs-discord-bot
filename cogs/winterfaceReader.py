@@ -15,6 +15,7 @@ import cv2
 import io
 import numpy as np
 import difflib
+import imutils
 
 
 
@@ -35,10 +36,11 @@ class winterfaceReader(commands.Cog):
                 r = requests.get(url)
                 image = Image.open(io.BytesIO(r.content))
                 image.save("image.png")
-                # img = cv2.imread("image.png",0)
+                img = cv2.imread("image.png",0)
                 # print (img)
                 # top_left,bottom_right = self.findWinterface(img)
-                top_left,bottom_right = self.findWinterface2()
+                # top_left,bottom_right = self.findWinterface2()
+                top_left,bottom_right = self.findWinterface3()
                 # self.findArrows()
 
                 print (top_left,bottom_right)
@@ -47,26 +49,26 @@ class winterfaceReader(commands.Cog):
                 image = image.resize((512,334))
                 # print (image.getpixel((0,0)))
                 image.save("hmm.png")
-                # counter = 1
-                # coordinates = {
-                #     1:{"name":"rect","x":361,"y":36,"width":110,"height":19},
-                #     2:{"name":"rect","x":361,"y":86,"width":110,"height":19},
-                #     3:{"name":"rect","x":361,"y":136,"width":110,"height":19},
-                #     4:{"name":"rect","x":361,"y":186,"width":110,"height":19},
-                #     5:{"name":"rect","x":361,"y":236,"width":110,"height":19}
-                # } 
+                counter = 1
+                coordinates = {
+                    1:{"name":"rect","x":361,"y":36,"width":110,"height":19},
+                    2:{"name":"rect","x":361,"y":86,"width":110,"height":19},
+                    3:{"name":"rect","x":361,"y":136,"width":110,"height":19},
+                    4:{"name":"rect","x":361,"y":186,"width":110,"height":19},
+                    5:{"name":"rect","x":361,"y":236,"width":110,"height":19}
+                } 
 
 
-                # (width,height) = image.width, image.height
-                # # print (width)
-                # # print (height)
+                (width,height) = image.width, image.height
+                # print (width)
+                # print (height)
 
-                # for k,v in coordinates.items():
+                for k,v in coordinates.items():
 
-                #     im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
-                #     fname = "character/" + str(counter) + str(k) + ".png"
-                #     im.save(fname)
-                # await self.findNames(ctx)
+                    im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
+                    fname = "character/" + str(counter) + str(k) + ".png"
+                    im.save(fname)
+                await self.findNames(ctx)
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
@@ -118,6 +120,57 @@ class winterfaceReader(commands.Cog):
 
         found_count = len(f)
         print (found_count)
+
+    def findWinterface3(self):
+        template = cv2.imread('winterfaces/winterface3.png')
+        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+        template = cv2.Canny(template, 50, 200)
+        (tH, tW) = template.shape[:2]
+        # load the image, convert it to grayscale, and initialize the
+        # bookkeeping variable to keep track of the matched region
+        image = cv2.imread('image.png')
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        found = None
+
+        # loop over the scales of the image
+        for scale in np.linspace(0.2, 1.0, 20)[::-1]:
+            # resize the image according to the scale, and keep track
+            # of the ratio of the resizing
+            resized = imutils.resize(gray, width = int(gray.shape[1] * scale))
+            r = gray.shape[1] / float(resized.shape[1])
+
+            # if the resized image is smaller than the template, then break
+            # from the loop
+            if resized.shape[0] < tH or resized.shape[1] < tW:
+                break
+            # detect edges in the resized, grayscale image and apply template
+            # matching to find the template in the image
+            edged = cv2.Canny(resized, 50, 200)
+            result = cv2.matchTemplate(edged, template, cv2.TM_CCOEFF)
+            (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+
+            # draw a bounding box around the detected region
+            clone = np.dstack([edged, edged, edged])
+            cv2.rectangle(clone, (maxLoc[0], maxLoc[1]),
+                (maxLoc[0] + tW, maxLoc[1] + tH), (0, 0, 255), 2)
+            # cv2.imshow("Visualize", clone)
+            # cv2.waitKey(0)
+
+            # if we have found a new maximum correlation value, then update
+            # the bookkeeping variable
+            if found is None or maxVal > found[0]:
+                found = (maxVal, maxLoc, r)
+
+        # unpack the bookkeeping variable and compute the (x, y) coordinates
+        # of the bounding box based on the resized ratio
+        (_, maxLoc, r) = found
+        (startX, startY) = (int(maxLoc[0] * r), int(maxLoc[1] * r))
+        (endX, endY) = (int((maxLoc[0] + tW) * r), int((maxLoc[1] + tH) * r))
+
+        # draw a bounding box around the detected result and display the image
+        cv2.rectangle(image, (startX, startY), (endX, endY), (0, 0, 255), 2)
+        cv2.imwrite("hmm2.png",image)
+        return (startX, startY), (endX, endY)
 
     def findWinterface2(self):
         image2 = cv2.imread('winterfaces/winterface3.png', cv2.IMREAD_COLOR)
@@ -204,15 +257,17 @@ class winterfaceReader(commands.Cog):
         return (startWinterfaceX[1]+1,startWinterfaceY[0]+1),(endWinterfaceX[1]-1,endWinterfaceY[0]-1)
 
     def findWinterface(self,img):
-        img = self.unsharp_mask(img)
-        img2 = img.copy()
+        # img = self.unsharp_mask(img)
+        # img2 = img.copy()
         template = cv2.imread('winterfaces/winterface2.png',0)
+        # template = self.unsharp_mask(template)
         w, h = template.shape[::-1]
+        template = self.image_resize(template,width=w*2,height=h*2)
         # All the 6 methods for comparison in a list
-        # methods = ['cv.TM_CCOEFF', 'cv.TM_CCOEFF_NORMED', 'cv.TM_CCORR',
-        #             'cv.TM_CCORR_NORMED', 'cv.TM_SQDIFF', 'cv.TM_SQDIFF_NORMED']
-        # for meth in methods:
-        img = img2.copy()
+        # methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
+        #             cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
+        # for method in methods:
+        # img = img2.copy()
         method = cv2.TM_CCOEFF
         # Apply template Matching
         res = cv2.matchTemplate(img,template,method)
@@ -225,7 +280,39 @@ class winterfaceReader(commands.Cog):
         else:
             top_left = max_loc
         bottom_right = (top_left[0] + w, top_left[1] + h)
+        print (top_left,bottom_right)
         return top_left,bottom_right
+
+    def image_resize(self, image, width = None, height = None, inter = cv2.INTER_AREA):
+        # initialize the dimensions of the image to be resized and
+        # grab the image size
+        dim = None
+        (h, w) = image.shape[:2]
+
+        # if both the width and height are None, then return the
+        # original image
+        if width is None and height is None:
+            return image
+
+        # check to see if the width is None
+        if width is None:
+            # calculate the ratio of the height and construct the
+            # dimensions
+            r = height / float(h)
+            dim = (int(w * r), height)
+
+        # otherwise, the height is None
+        else:
+            # calculate the ratio of the width and construct the
+            # dimensions
+            r = width / float(w)
+            dim = (width, int(h * r))
+
+        # resize the image
+        resized = cv2.resize(image, dim, interpolation = inter)
+
+        # return the resized image
+        return resized
 
     def unsharp_mask(self, image, kernel_size=(5, 5), sigma=1.0, amount=1.0, threshold=0):
         """Return a sharpened version of the image, using an unsharp mask."""
@@ -429,7 +516,7 @@ class winterfaceReader(commands.Cog):
             print (fullTime)
             print (decoder(fullTime))
             name = decoder(fullTime)
-            fname = "names/" + ctx.guild.name.replace(" ","") + ".json"
+            fname = "names/names.json"
             namesDict = jsonHandling.loadJSON(fname)
             possibleDgers = list(namesDict.keys())
 
