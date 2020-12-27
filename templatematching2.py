@@ -5,7 +5,7 @@ import pyscreenshot as grabimage
 import os
 import imutils
 
-template = cv2.imread('winterfaces/winterface3.png')
+template = cv2.imread('confirm.png')
 template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
 template = cv2.Canny(template, 50, 200)
 (tH, tW) = template.shape[:2]
@@ -18,7 +18,7 @@ gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 found = None
 
 # loop over the scales of the image
-for scale in np.linspace(0.2, 1.0, 20)[::-1]:
+for scale in np.linspace(0.2,1.0,10, 20)[::-1]:
     # resize the image according to the scale, and keep track
     # of the ratio of the resizing
     resized = imutils.resize(gray, width = int(gray.shape[1] * scale))

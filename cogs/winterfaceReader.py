@@ -23,9 +23,10 @@ from utils import jsonHandling
 from utils.misc import createFolder
 
 class winterfaceReader(commands.Cog):
-    
+
     def __init__(self, bot):
         self.bot = bot
+        self.activeMessages = []
 
     @commands.command(name="highscore")
     async def highscore(self, ctx, url):
@@ -58,20 +59,52 @@ class winterfaceReader(commands.Cog):
                     5:{"name":"rect","x":361,"y":236,"width":110,"height":19}
                 } 
 
+                # nonNamesCoordinates = {
+                #     "time":{"name":"rect","x":32,"y":306,"width":47,"height":12},
+                #     "floor":{"name":"rect","x":44,"y":54,"width":54,"height":15},
+                #     "level-mod":{"name":"rect","x":298,"y":158,"width":33,"height":17},
+                #     "bonus":{"name":"rect","x":300,"y":138,"width":31,"height":16}
+                # }
+
+                nonNamesCoordinates = {
+                    "time":{"name":"rect","x":32,"y":306,"width":47,"height":12}
+                }
 
                 (width,height) = image.width, image.height
                 # print (width)
                 # print (height)
 
                 for k,v in coordinates.items():
-
                     im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
                     fname = "character/" + str(counter) + str(k) + ".png"
                     im.save(fname)
-                await self.findNames(ctx)
+
+                for k,v in nonNamesCoordinates.items():
+                    im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
+                    fname = "times/" + str(counter) + str(k) + ".png"
+                    im.save(fname)
+
+                names = self.findNames(ctx)
+                time = self.findTime(ctx)
+                embed = self.generateEmbed(names,time)
+                message = await ctx.send(embed=embed)
+                await message.add_reaction("\U00002705")
+                await message.add_reaction("\U0000274C")
+                self.activeMessages.append(message.id)
+                print (self.activeMessages)
+                
         except Exception as e:
             print(e)
             traceback.print_exc(file=sys.stdout)
+
+    def generateEmbed(self,names,time):
+        embed = discord.Embed(title="Winterface Data")
+        counter = 1
+        for x in names:
+            embed.add_field(name="Player " + str(counter), value=x, inline=False)
+            counter = counter + 1
+        embed.add_field(name="Time",value=time,inline=False)
+        return embed
 
     def is_url_image(self,url):    
         mimetype,encoding = mimetypes.guess_type(url)
@@ -326,7 +359,113 @@ class winterfaceReader(commands.Cog):
             np.copyto(sharpened, image, where=low_contrast_mask)
         return sharpened
 
-    async def findNames(self,ctx):
+    def findTime(self,ctx):
+        def equal(im1, im2):
+            return ImageChops.difference(im1, im2).getbbox() is None
+
+        def fuzzyEqual(im1,im2):
+            im1 = np.array(im1)
+            im2 = np.array(im2)
+            err = np.sum((im1.astype("float") - im2.astype("float")) ** 2)
+            err /= float(im1.shape[0] * im1.shape[1])
+            return err 
+
+        def findRow(zero,time):
+            (glwidth,glheight) = zero.width, zero.height
+            (twidth,theight) = time.width, time.height
+            for x in range(twidth - glwidth):
+                for y in range(theight - glheight ):
+                    im = time.crop((x, y, x + glwidth, y + glheight))
+                    # im.save("test/" + str(x) + " " + str(y) +".png")
+                    # if equal(im,zero):
+                    # print (fuzzyEqual(im,zero))
+                    
+                    if fuzzyEqual(im,zero) < 0.10:
+                        # print ("match found")
+                        # print (fuzzyEqual(im,zero))
+                        fullTime[x] = 0
+                        mainX = x
+                        mainY = y
+                        im.save("test/" + str(x) + " " + str(y) + ".png")
+                        return mainX, mainY
+            mainX = 0
+            mainY = 0
+            return mainX, mainY
+
+        def decoder(fullTime):
+            print (fullTime)
+            timeDictList = (sorted(fullTime))
+            timeStr = ""
+            for x in timeDictList:
+                timeStr = timeStr + str(fullTime[x])
+            return timeStr
+
+        def findNonZeros(filepath,fullTime,glwidth,glheight,k):
+            zero = Image.open(filepath)
+            (glwidth,glheight) = zero.width, zero.height
+            for x in range(twidth - glwidth + 1):
+                im = time.crop((x, rowY, x + glwidth, rowY + glheight))
+                # im.save("testRowOther/" + str(x) + " " + str(rowY) + ".png")
+                if equal(im,zero):
+                    fullTime[x] = k
+                    # breakAt = x + glwidth
+            return fullTime
+
+
+        nonZeros = {
+            1:"glypths/time1.png",
+            2:"glypths/time2.png",
+            3:"glypths/time3.png",
+            4:"glypths/time4.png",
+            5:"glypths/time5.png",
+            6:"glypths/time6.png",
+            7:"glypths/time7.png",
+            8:"glypths/time8.png",
+            9:"glypths/time9.png"
+        }    
+
+        times = []
+        for file in os.listdir("./times"):
+            times.append(file)
+
+        print (times)
+
+        for t in times:
+            fullTime = {}
+            fname = "times/" + t
+            print (fname)
+            time = Image.open(fname)
+            zero = Image.open("glypths/time0.png")
+
+            enhancer = ImageEnhance.Contrast(time)
+            time = enhancer.enhance(2)
+
+            (glwidth,glheight) = zero.width, zero.height
+            (twidth,theight) = time.width, time.height
+
+            # print (twidth,theight)
+
+            time = time.convert('1')
+            time.save("ahh/" + t + "test.png")
+            rowX,rowY = (findRow(zero,time))
+            
+            if rowX == 0:
+                print ("Couldn't find time")
+                continue
+
+            for x in range(rowX + 1,twidth - glwidth + 1):
+                im = time.crop((x, rowY, x + glwidth, rowY + glheight))
+                if equal(im,zero):
+                    fullTime[x] = 0
+
+            breakAt = 0
+            for k,v in nonZeros.items():
+                fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
+
+            return (decoder(fullTime))
+
+
+    def findNames(self,ctx):
         def equal(im1, im2):
             return ImageChops.difference(im1, im2).getbbox() is None
 
@@ -459,6 +598,8 @@ class winterfaceReader(commands.Cog):
             "0":"charGlyph/glyphName0.png"
         }    
 
+        namesFound = []
+
         times = []
         for file in os.listdir("./character"):
             times.append(file)
@@ -536,14 +677,18 @@ class winterfaceReader(commands.Cog):
             if name == None: 
                 name = "None found"
             elif len(name) > 0:
-                namesDict[name] = None
+                # namesDict[name] = None
                 jsonHandling.dumpJSON(fname,namesDict)
                 print ("name=====",name)
-                await ctx.send(name)
+                namesFound.append(name)
             else:
-                await ctx.send("No name found")
+                namesFound.append("None")
+        return namesFound
 
-
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self,payload):
+        if payload.message_id in self.activeMessages and payload.user_id != 722758078310776832 and payload.user_id != 718483095262855280:
+            print ("accepted or declined")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
