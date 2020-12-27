@@ -1,8 +1,7 @@
 import os
-import random
 import string
 import json
-import sys 
+import sys
 import traceback
 from datetime import datetime
 
@@ -24,16 +23,33 @@ class vouchSystem(commands.Cog):
         createFolder("vouches")
 
     def addVouchee(self, name, vouches):
+        """
+        Helper function to add a new vouchee
+
+        Parameters:
+        name - string name of the vouchee
+        vouches - dictionary of the form {vouches, vouchers, antivouchers}
+            - vouches is the numeric number of vouches
+            - vouchers is a list of names of vouchers
+            - antivouches is a list of names of antivouches
+
+        """
         print("attempting to vouch")
         if name in vouches.keys():
             pass
         else:
             print("no vouches - adding to JSON")
-            vouches[name] = {"vouches":0,"vouchers":{},"antivouchers":{}}   
+            vouches[name] = {"vouches":0, "vouchers":{}, "antivouchers":{}}   
         print("added vouchee successfully")
         return vouches
 
     def vouchValue(self, roles):
+        """
+        Helper function to define values of DGS ranks
+
+        Parameters:
+        roles - list of DGS ranks from getRoles()
+        """
         value = 0
         if "Floorgazer" in roles:
             value = 3
@@ -46,12 +62,23 @@ class vouchSystem(commands.Cog):
         return value
 
     def getRoles(self, ctx):
+        """
+        Helper function to get the roles for rank values
+
+        """
         roles = []
         for x in ctx.author.roles:
             roles.append(x.name)
         return roles
 
     def checkBuffer(self, ctx, user):
+        """
+        Helper function to check if the caller has already made a vouch or antivouch in the buffer
+
+        Parameters:
+        user - string name of the vouchee 
+
+        """
         bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""), "vouches")
         for k,v in bufferData.items():
             if v["vouchInfo"]["user"] == user and v["voucherInfo"]["voucher"] == str(ctx.author.id):
@@ -59,16 +86,32 @@ class vouchSystem(commands.Cog):
         return True
 
     def userInBuffer(self, ctx, user):
+        """
+        Helper function to check if a user is in the buffer already
+
+        Parameters:
+        user - string name of the vouchee 
+
+        """
         bufferData = bufferHandling.getAllBufferData(ctx.guild.name.replace(" ",""), "vouches")
         isInBuffer = False
         for k,v in bufferData.items():
             if v["vouchInfo"]["user"] == user:
                 isInBuffer = True
-        print(isInBuffer)
         return isInBuffer
 
     def checkHistory(self, vouchType, vouches, ctx, user):
-        
+        """
+        Helper function to prepare vouches
+
+        Parameters:
+        vouchType - string that is one of: "vouch" or "antivouch"
+        vouches - dictionary of the form {vouches, vouchers, antivouchers}
+            - vouches is the numeric number of vouches
+            - vouchers is a list of names of vouchers
+            - antivouches is a list of names of antivouches
+
+        """
         if self.checkBuffer(ctx, user) == False:
             return False, {"reason":"A vouch from you for this user is already in the buffer awaiting approval."}
 
@@ -84,7 +127,7 @@ class vouchSystem(commands.Cog):
         roles = self.getRoles(ctx)
         rankValue = self.vouchValue(roles)
             
-        #check if this user has already vouched AND at the current value
+        # check if this user has already vouched AND at the current value
         try:  
             if str(ctx.author.id) in vouches[user][checkDict] and rankValue == vouches[user][checkDict][str(ctx.author.id)]["value"]:
                 return False, {"reason":"Already vouched this user at current rank value."}
@@ -105,12 +148,23 @@ class vouchSystem(commands.Cog):
         return True, vouchInfo
 
     def argvCombiner(self, argv):
+        """
+        Helper function to combine list elements
+
+        Parameters:
+        argv - list of arguments to combine
+
+        """
         newString = ""
         for x in argv:
             newString = newString + x + " "
         return newString
 
     def whitelistCheck(self, ctx):
+        """
+        Helper function to check if this channel is whitelisted to accept vouch commands
+
+        """
         fname = "guildsettings/" + ctx.guild.name.replace(" ", "") + ".json"
         settings = jsonHandling.loadJSON(fname)
         print(settings)
@@ -123,28 +177,32 @@ class vouchSystem(commands.Cog):
     @commands.command(name="updatingmessageinit")
     @commands.has_any_role("Reviewer","Admin")
     async def updatingmessage(self, ctx):
+        """
+        Callable function to create a table that can be filled with vouches
+
+        """
         print("------------------------------ beginning updatingmessage() ------------------------------")
-        #delete the senders message
+        # delete the senders message
         usersMessage = ctx.message
         await usersMessage.delete()
         
-        #create a new message and send it
+        # create a new message and send it
         message = await ctx.send(embed=discord.Embed(title="Type update message to initalise me."))
         
-        #store the details of the sent message
+        # store the details of the sent message
         updatingVouchMessage = {
             "messageID":message.id,
             "channelID":message.channel.id
         }
 
-        #load server settings
+        # load server settings
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
         settings = jsonHandling.loadJSON(fname)
 
-        #update details of updating vouch message
+        # update details of updating vouch message
         settings["updatingVouchMessage"] = updatingVouchMessage
         
-        #save details
+        # save details
         jsonHandling.dumpJSON(fname, settings)
         print("------------------------------ ending updatingmessage() ------------------------------")
 
@@ -152,6 +210,10 @@ class vouchSystem(commands.Cog):
     @commands.command(name="updatemessage")
     @commands.has_any_role("Reviewer","Admin")
     async def updateMessage(self, ctx):
+        """
+        Callable function to update the table to the latest vouches
+
+        """
         print("------------------------------ beginning updateMessage() ------------------------------")
         #load server settings
         fname = "guildsettings/" + ctx.guild.name.replace(" ","") + ".json"
@@ -176,6 +238,14 @@ class vouchSystem(commands.Cog):
     @commands.command(name="vouch")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
     async def vouch(self, ctx, user:str, *argv):
+        """
+        Callable function for a DGS rank to vouch someone
+
+        Parameters:
+        user - string of the name of the vouchee
+        *argv - additional arguments. Intended as a description of the reasoning for a vouch
+
+        """
         print("------------------------------ beginning vouch() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("Cannot do that in this channel")
@@ -214,6 +284,14 @@ class vouchSystem(commands.Cog):
     @commands.command(name="antivouch")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
     async def antivouch(self, ctx, user:str, *argv):
+        """
+        Callable function for a DGS rank to antivouch someone
+
+        Parameters:
+        user - string of the name of the vouchee
+        *argv - additional arguments. Intended as a description of the reasoning for a antivouch
+
+        """
         print("------------------------------ beginning antivouch() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("Cannot do that in this channel")
@@ -255,6 +333,14 @@ class vouchSystem(commands.Cog):
     @commands.command(name="unvouch")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman")
     async def unvouch(self, ctx, user:str):
+        """
+        Callable function for a DGS rank to unvouch someone they previously unvouched
+
+        Parameters:
+        user - string of the name of the vouchee
+        *argv - additional arguments. Intended as a description of the reasoning for a antivouch
+
+        """
         print("------------------------------ beginning unvouch() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("Cannot do that in this channel")
@@ -289,6 +375,17 @@ class vouchSystem(commands.Cog):
     @commands.command(name="adminvouch")
     @commands.has_any_role("Reviewer", "Admin")
     async def adminVouch(self, ctx, voucher:int, user:str, vouchType:str, rankValue:int, reason:str):
+        """
+        Callable function for an admin to do a vouch or antivouch*
+
+        Parameters:
+        voucher - Int of discord ID number of the person you are vouching for
+        user - String of the name of the vouchee/antivouchee
+        vouchType - String of "vouch" or "antivouch"
+        rankValue - Int of value of the rank of the voucher
+        reason - String message of the reasoning
+
+        """
         print("------------------------------ beginning adminVouch() ------------------------------")
         vouchType = vouchType.lower()
         now = datetime.now()
@@ -324,6 +421,14 @@ class vouchSystem(commands.Cog):
     @commands.command(name="renamevouchee")
     @commands.has_any_role("Reviewer","Admin")
     async def renameVouchee(self, ctx, user:str, newName:str):
+        """
+        Callable function for an admin to rename a vouchee in the system
+
+        Parameters:
+        user - String of the name of the vouchee/antivouchee in the system
+        newName - String of the new name to use
+
+        """
         print("------------------------------ beginning renameVouchee() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
@@ -342,6 +447,13 @@ class vouchSystem(commands.Cog):
     @commands.command(name="removeuser")
     @commands.has_any_role("Reviewer", "Admin")
     async def removeUser(self, ctx, user:str):
+        """
+        Callable function for an admin to remove a vouchee from the system
+
+        Parameters:
+        user - String of the name of the vouchee/antivouchee
+
+        """
         print("------------------------------ beginning viewVouchBuffer() ------------------------------")
         if self.whitelistCheck(ctx) == False:
                 await ctx.send("This command is not allowed in this channel.")
@@ -356,6 +468,10 @@ class vouchSystem(commands.Cog):
     @commands.command(name="vouchbuffer")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def viewVouchBuffer(self, ctx):
+        """
+        Callable function to see the vouches in a buffer
+
+        """
         print("------------------------------ beginning viewVouchBuffer() ------------------------------")
         try:
             if self.whitelistCheck(ctx) == False:
@@ -383,6 +499,13 @@ class vouchSystem(commands.Cog):
     @commands.command(name="removebuffervouch")
     @commands.has_any_role("Reviewer", "Admin")
     async def removeVouch(self, ctx, vouchID:str, silent = False):
+        """
+        Callable function for admin's to remove a vouch or antivouch from the buffer
+
+        Parameters:
+        vouchID - String corresponding to the ID of the vouch to remove
+
+        """
         print("------------------------------ beginning removeVouch() ------------------------------")
         try:   
             if self.whitelistCheck(ctx) == False:
@@ -403,6 +526,10 @@ class vouchSystem(commands.Cog):
     @commands.command(name="acceptallvouches")
     @commands.has_any_role("Reviewer", "Admin")
     async def acceptAllVouches(self, ctx):
+        """
+        Callable function for admin's to blanket accept all vouches and antivouches existing in the buffer, without needing to specify any IDs
+
+        """
         print("------------------------------ beginning acceptAllVouches() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
@@ -419,6 +546,10 @@ class vouchSystem(commands.Cog):
     @commands.command(name="rejectallvouches")
     @commands.has_any_role("Reviewer", "Admin")
     async def rejectAllVouches(self, ctx):
+        """
+        Callable function for admin's to blanket reject all vouches and antivouches existing in the buffer, without needing to specify any IDs
+
+        """
         print("------------------------------ beginning rejectAllVouches() ------------------------------")
         if self.whitelistCheck(ctx) == False:
             await ctx.send("This command is not allowed in this channel.")
@@ -435,16 +566,24 @@ class vouchSystem(commands.Cog):
     @commands.command(name="acceptvouch")
     @commands.has_any_role("Reviewer", "Admin")
     async def acceptVouch(self, ctx, vouchID:str, silent=False):
+        """
+        Callable function for admin's to accept a vouch from the buffer based on ID
+
+        Parameters:
+        vouchID - String representing the vouch to accept
+        silent - Boolean indicating whether or not to get verbose information
+
+        """
         try:
             print("------------------------------ beginning acceptVouch() ------------------------------")
-            #Message to be printed out at the end.
+            # Message to be printed out at the end.
             message = "Vouch complete!"
-            #get data for this vouchID
+            # get data for this vouchID
             vouchData = bufferHandling.getBufferData(ctx.guild.name.replace(" ",""), "vouches", vouchID)
-            #get vouches data
+            # get vouches data
             fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
             vouches = jsonHandling.loadJSON(fname)
-            #add the vouch to the vouch datastore
+            # add the vouch to the vouch datastore
             vouches = self.addVouchee(vouchData["vouchInfo"]["user"],vouches)
            
             # Remove any instances of this person already vouching/anti'ing the vouchee
@@ -461,12 +600,12 @@ class vouchSystem(commands.Cog):
             except:
                 pass
             
-            #add the voucher info to the vouch datastore
-            #if it's a vouch
+            # add the voucher info to the vouch datastore
+            # if it's a vouch
             if vouchData["vouchInfo"]["vouchType"] == "vouch":
                 vouches[vouchData["vouchInfo"]["user"]]["vouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
                 
-            #if it's an antivouch
+            # if it's an antivouch
             elif vouchData["vouchInfo"]["vouchType"] == "antivouch":
                 vouches[vouchData["vouchInfo"]["user"]]["antivouchers"][vouchData["voucherInfo"]["voucher"]] = vouchData["voucherInfo"]
             
@@ -481,15 +620,15 @@ class vouchSystem(commands.Cog):
             # Add to dict
             vouches[vouchData["vouchInfo"]["user"]]["vouches"] = max(numVouches, 0)
 
-            #check if user has been vouched to 0 and remove if so
+            #c heck if user has been vouched to 0 and remove if so
             if vouches[vouchData["vouchInfo"]["user"]]["vouches"] == 0:
                 del vouches[vouchData["vouchInfo"]["user"]]
                 message = ("Reached 0 vouches. Removed " + vouchData["vouchInfo"]["user"])
                 silent = False
 
-            #save vouch data
+            # save vouch data
             jsonHandling.dumpJSON(fname,vouches)
-            #remove vouch from buffer
+            # remove vouch from buffer
             bufferHandling.removeBuffer(ctx.guild.name.replace(" ", ""), "vouches", vouchID)
             # await self.updateMessage(ctx)
             if silent == False:
@@ -503,11 +642,16 @@ class vouchSystem(commands.Cog):
             print(e)
             traceback.print_exc(file=sys.stdout)
 
-    
-
     @commands.command(name="vouchinfo")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def vouchInfo(self, ctx, user:str):
+        """
+        Callable function for seeing information about the vouches of a user. Functionality gives verbose output for Wing+ in whitelisted channels and returns only the number of vouches in other cases.
+
+        Parameters:
+        user - string of the vouchee name to display
+
+        """
         print("------------------------------ begining vouchInfo() ------------------------------")
         fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
         if os.path.exists(fname):
@@ -569,6 +713,13 @@ class vouchSystem(commands.Cog):
     @commands.command(name="allvouches")
     @commands.has_any_role("Floorgazer", "Keyer", "Wingman", "Wingwoman", "3s", "2s", "1s")
     async def allVouches(self, ctx, silent=False):
+        """
+        Callable function for seeing information about all vouchees. Functionality gives in-depth output for Wing+ in whitelisted channels and returns only the number of vouches in other cases.
+
+        Parameters:
+        silent - Boolean indicating whether or not to get verbose information
+
+        """
         print("------------------------------ beginning allVouches() ------------------------------")
         try:
             fname = "vouches/" + ctx.guild.name.replace(" ", "") + ".json"
