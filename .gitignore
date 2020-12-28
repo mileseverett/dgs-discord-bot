@@ -3,6 +3,4 @@ test.py
 *.pyc
 *.json
 !names/names.json
-*.png
-!winterfaces/winterface2.png
 
