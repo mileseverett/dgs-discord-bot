@@ -5,6 +5,9 @@ import sys
 import traceback
 import mysql.connector
 
+import string
+import random
+
 import cv2 
 import io
 import numpy as np
@@ -26,8 +29,7 @@ class winterfaceReader(commands.Cog):
         self.bot = bot
         self.activeMessages = []
 
-    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime):
-        # Connect to DB
+    def makeConn(self):
         user = os.getenv('MYSQL_USER')
         password = os.getenv('MYSQL_PASSWORD')
         host = os.getenv('MYSQL_HOST')
@@ -38,8 +40,13 @@ class winterfaceReader(commands.Cog):
                               ,host=host
                               ,port=port
                               ,database='DGS_Hiscores')
+        return conn
 
-        query_string = "INSERT INTO submission_raw (playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime) values ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime)
+    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime,imageLink,secretValue):
+        # Connect to DB
+        conn = self.makeConn()
+
+        query_string = "INSERT INTO submission_raw (playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink) values ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink)
         try:
             cursor = conn.cursor()
             cursor.execute(query_string)
@@ -47,14 +54,43 @@ class winterfaceReader(commands.Cog):
             cursor.close()
             
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO submission_status (floorID, completedInd) values ({}, 0)".format(floorID))
+            print ("INSERT INTO submission_status (floorID, completedInd, websiteLink) values ({}, 0, '{}')".format(floorID,secretValue))
+            cursor.execute("INSERT INTO submission_status (floorID, completedInd, websiteLink) values ({}, 0, '{}')".format(floorID,secretValue))
             conn.commit()
         finally:
             cursor.close()
             conn.close()
 
-        return True
-    
+        return True, floorID
+
+    def retrieveFloor(self,floorID):
+        #connect to DB
+        conn = self.makeConn()
+
+        query_string = "SELECT * FROM submission_status WHERE floorID = {};".format(int(floorID))
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string)
+            data = cursor.fetchall()
+            cursor.close()
+            conn.commit()
+        finally:
+            conn.close()
+            return data
+
+    def updateSubmissionStatus(self,floorID,completedInd):
+        conn = self.makeConn()
+
+        query_string = "UPDATE submission_status set completedInd = 1 WHERE floorID = {};".format(int(floorID))
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string)
+            conn.commit()
+        finally:
+            if (conn.is_connected()):
+                conn.close()
+                print("MySQL connection is closed")        
+
     @commands.command(name="highscore")
     async def highscore(self, ctx, url):
         try:
@@ -119,7 +155,8 @@ class winterfaceReader(commands.Cog):
                     im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
                     fname = "floor/" + str(counter) + str(k) + ".png"
                     im.save(fname)
-
+                letters = string.ascii_lowercase
+                random32 = ( ''.join(random.choice(letters) for i in range(32)) )
                 names = self.findNames(ctx)
                 print(names)
                 str(names)
@@ -128,9 +165,9 @@ class winterfaceReader(commands.Cog):
                 print(time)
 
                 # upload data to DB
-                # self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = 'Frozen', endTime = time) # frozen hard coded for now
+                success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, secretValue = random32)
 
-                embed = self.generateEmbed(names,time,theme)
+                embed = self.generateEmbed(names,time,theme,floorID)
                 message = await ctx.send(embed=embed)
                 await message.add_reaction("\U00002705")
                 await message.add_reaction("\U0000274C")
@@ -141,9 +178,10 @@ class winterfaceReader(commands.Cog):
             print(e)
             traceback.print_exc(file=sys.stdout)
 
-    def generateEmbed(self,names,time,theme):
+    def generateEmbed(self,names,time,theme,floorID):
         embed = discord.Embed(title="Winterface Data")
         counter = 1
+        embed.add_field(name="ID",value=floorID,inline=False)
         for x in names:
             embed.add_field(name="Player " + str(counter), value=x, inline=False)
             counter = counter + 1
@@ -536,7 +574,7 @@ class winterfaceReader(commands.Cog):
                 fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
                 # print (fullTime)
             decoded = (decoder(fullTime))
-            if decoded in range(0,12):
+            if decoded in range(1,12):
                 return "Frozen"
             elif decoded in range(12,18):
                 return "Abandoned 1"
@@ -548,6 +586,8 @@ class winterfaceReader(commands.Cog):
                 return "Occult"
             elif decoded in range(48,61):
                 return "Warped"
+            else:
+                return "N/A"
 
 
 
@@ -877,10 +917,31 @@ class winterfaceReader(commands.Cog):
                 namesFound.append("None")
         return namesFound
 
+    async def notGood(self,data,floorID):
+        webUrl = "http://www.dgsbot.com/" + str(floorID) + str(data[0][2])
+        print (webUrl)
+
+    async def validateFloor(self,data,floorID):
+        print (data)
+        self.updateSubmissionStatus(floorID = data[0][0], completedInd = 1)
+
+    async def getFloor(self,payload):
+        channel = self.bot.get_channel(payload.channel_id)
+        msg = await channel.fetch_message(payload.message_id)
+        embed = msg.embeds[0]
+        embedDict = (embed.to_dict())
+        floorID = (embedDict["fields"][0]["value"])
+        return self.retrieveFloor(floorID), floorID
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self,payload):
         if payload.message_id in self.activeMessages and payload.user_id != 722758078310776832 and payload.user_id != 718483095262855280:
-            print ("accepted or declined")
+            if payload.emoji.name == "\U00002705":
+                data, floorID = await self.getFloor(payload)
+                await self.validateFloor(data,floorID)
+            elif payload.emoji.name == "\U0000274C":
+                data, floorID = await self.getFloor(payload)
+                await self.notGood(data,floorID)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
