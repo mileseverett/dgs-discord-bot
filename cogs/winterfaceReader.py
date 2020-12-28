@@ -97,6 +97,10 @@ class winterfaceReader(commands.Cog):
                     "time":{"name":"rect","x":32,"y":306,"width":47,"height":12}
                 }
 
+                themeCoordinates = {
+                    "floor":{"name":"rect","x":44,"y":54,"width":54,"height":15}
+                }
+
                 (width,height) = image.width, image.height
                 # print (width)
                 # print (height)
@@ -111,16 +115,22 @@ class winterfaceReader(commands.Cog):
                     fname = "times/" + str(counter) + str(k) + ".png"
                     im.save(fname)
 
+                for k,v in themeCoordinates.items():
+                    im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
+                    fname = "floor/" + str(counter) + str(k) + ".png"
+                    im.save(fname)
+
                 names = self.findNames(ctx)
                 print(names)
                 str(names)
                 time = self.findTime(ctx)
+                theme = self.findTheme(ctx)
                 print(time)
 
                 # upload data to DB
-                self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = 'Frozen', endTime = time) # frozen hard coded for now
+                # self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = 'Frozen', endTime = time) # frozen hard coded for now
 
-                embed = self.generateEmbed(names,time)
+                embed = self.generateEmbed(names,time,theme)
                 message = await ctx.send(embed=embed)
                 await message.add_reaction("\U00002705")
                 await message.add_reaction("\U0000274C")
@@ -131,13 +141,14 @@ class winterfaceReader(commands.Cog):
             print(e)
             traceback.print_exc(file=sys.stdout)
 
-    def generateEmbed(self,names,time):
+    def generateEmbed(self,names,time,theme):
         embed = discord.Embed(title="Winterface Data")
         counter = 1
         for x in names:
             embed.add_field(name="Player " + str(counter), value=x, inline=False)
             counter = counter + 1
         embed.add_field(name="Time",value=time,inline=False)
+        embed.add_field(name="Theme",value=theme,inline=False)
         return embed
 
     def is_url_image(self,url):    
@@ -392,6 +403,153 @@ class winterfaceReader(commands.Cog):
             low_contrast_mask = np.absolute(image - blurred) < threshold
             np.copyto(sharpened, image, where=low_contrast_mask)
         return sharpened
+
+    def findTheme(self,ctx):
+        def equal(im1, im2):
+            return ImageChops.difference(im1, im2).getbbox() is None
+
+        def fuzzyEqual(im1,im2):
+            im1 = np.array(im1)
+            im2 = np.array(im2)
+            err = np.sum((im1.astype("float") - im2.astype("float")) ** 2)
+            err /= float(im1.shape[0] * im1.shape[1])
+            return err 
+
+        def findRow(zero,time,charName):
+            (glwidth,glheight) = zero.width, zero.height
+            (twidth,theight) = time.width, time.height
+            for x in range(twidth - glwidth):
+                for y in range(theight - glheight ):
+                    im = time.crop((x, y, x + glwidth, y + glheight))
+                    # im.save("test/" + str(x) + " " + str(y) +".png")
+                    # if equal(im,zero):
+                    # print (fuzzyEqual(im,zero))
+                    
+                    if fuzzyEqual(im,zero) < 0.05:
+                        # print ("match found at ",x,y)
+                        # print (fuzzyEqual(im,zero))
+                        charDict= {"character":charName,"charLength":glwidth}
+                        fullTime[x] = charDict
+                        mainX = x
+                        mainY = y
+                        im.save("test/" + str(x) + " " + str(y) + ".png")
+                        return True,mainX, mainY
+            mainX = 0
+            mainY = 0
+            return False,mainX, mainY
+
+        def decoder(fullTime):
+            print (fullTime)
+            timeDictList = (sorted(fullTime))
+            print ("timeDictList",timeDictList)
+            timeStr = ""
+            for x in timeDictList:
+                timeStr = timeStr + str(fullTime[x]["character"])
+            return int(timeStr)
+
+        def findNonZeros(filepath,fullTime,glwidth,glheight,k):
+            zero = Image.open(filepath)
+            zero = zero.convert('1')
+            (glwidth,glheight) = zero.width, zero.height
+            for x in range(0,twidth - glwidth + 1):
+                im = time.crop((x, rowY, x + glwidth, rowY + glheight))
+                if fuzzyEqual(im,zero) < 0.05:
+                    charDict= {"character":k,"charLength":glwidth}
+                    fullTime[x] = charDict
+            return fullTime
+
+
+        floorChars = {
+            1:"floorGlyph/floor1.png",
+            2:"floorGlyph/floor2.png",
+            3:"floorGlyph/floor3.png",
+            4:"floorGlyph/floor4.png",
+            5:"floorGlyph/floor5.png",
+            6:"floorGlyph/floor6.png",
+            7:"floorGlyph/floor7.png",
+            8:"floorGlyph/floor8.png",
+            9:"floorGlyph/floor9.png",
+            0:"floorGlyph/floor0.png"
+        }    
+
+        times = []
+        for file in os.listdir("./floor"):
+            times.append(file)
+
+        print (times)
+
+        for t in times:
+            fullTime = {}
+            fname = "floor/" + t
+            print (fname)
+            time = Image.open(fname)
+            zero = Image.open("glypths/time0.png")
+            
+            datas = time.getdata()
+
+            new_image_data = []
+            for item in datas:
+                # change all white (also shades of whites) pixels to yellow
+                if item[0] == 160:
+                    new_image_data.append((198, 155, 1))
+                else:
+                    new_image_data.append(item)
+            
+            time.putdata(new_image_data)
+
+            enhancer = ImageEnhance.Contrast(time)
+            time = enhancer.enhance(2)
+
+            (glwidth,glheight) = zero.width, zero.height
+            (twidth,theight) = time.width, time.height
+
+            # print (twidth,theight)
+
+            time = time.convert('1')
+            time.save("ahh/" + t + "test.png")
+            # rowX,rowY = (findRow(zero,time))
+            
+            foundChar = "Not Found"
+            matchFound = False
+            for k,v in floorChars.items():
+                # print ("trying:",k)
+                zero = Image.open(v)
+                zero = zero.convert('1')
+                matchFound,rowX,rowY = (findRow(zero,time,k))
+                if matchFound == True:
+                    fullTime[rowX] = k
+                    break
+
+            print (matchFound,rowX,rowY,fullTime)
+
+            # if rowX == 0:
+            #     print ("Couldn't find time")
+            #     continue
+
+            # for x in range(rowX + 1,twidth - glwidth + 1):
+            #     im = time.crop((x, rowY, x + glwidth, rowY + glheight))
+            #     if equal(im,zero):
+            #         fullTime[x] = 0
+
+            # breakAt = 0
+            for k,v in floorChars.items():
+                fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
+                # print (fullTime)
+            decoded = (decoder(fullTime))
+            if decoded in range(0,12):
+                return "Frozen"
+            elif decoded in range(12,18):
+                return "Abandoned 1"
+            elif decoded in range(18,30):
+                return "Furnished"
+            elif decoded in range(30,36):
+                return "Abandoned 2"
+            elif decoded in range(36,48):
+                return "Occult"
+            elif decoded in range(48,61):
+                return "Warped"
+
+
 
     def findTime(self,ctx):
         def equal(im1, im2):
