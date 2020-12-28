@@ -28,6 +28,11 @@ class winterfaceReader(commands.Cog):
 
     def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime):
         # Connect to DB
+        user = os.getenv('MYSQL_USER')
+        password = os.getenv('MYSQL_PASSWORD')
+        host = os.getenv('MYSQL_HOST')
+        port = os.getenv('MYSQL_PORT')
+
         conn = mysql.connector.connect(user='admin'
                               , password='Bat7espu'
                               ,host='dgsbot-db.c10qos1emenk.us-east-2.rds.amazonaws.com'
