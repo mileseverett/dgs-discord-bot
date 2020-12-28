@@ -33,10 +33,10 @@ class winterfaceReader(commands.Cog):
         host = os.getenv('MYSQL_HOST')
         port = os.getenv('MYSQL_PORT')
 
-        conn = mysql.connector.connect(user='admin'
-                              , password='Bat7espu'
-                              ,host='dgsbot-db.c10qos1emenk.us-east-2.rds.amazonaws.com'
-                              ,port='3306'
+        conn = mysql.connector.connect(user=user
+                              , password=password
+                              ,host=host
+                              ,port=port
                               ,database='DGS_Hiscores')
 
         query_string = "INSERT INTO submission_raw (playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime) values ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime)
