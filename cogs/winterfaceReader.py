@@ -1,23 +1,21 @@
 import os
-import random
-import pickle
-import string
 import json
 import requests
 import sys
 import traceback
-import urllib.request
-import discord
-from discord.ext import commands
-import mimetypes, urllib
-from PIL import Image, ImageEnhance, ImageFilter, ImageChops
+import mysql.connector
+
 import cv2 
 import io
 import numpy as np
 import difflib
 import imutils
 
+import mimetypes, urllib
+from PIL import Image, ImageEnhance, ImageFilter, ImageChops
 
+import discord
+from discord.ext import commands
 
 from utils import jsonHandling
 from utils.misc import createFolder
@@ -28,6 +26,30 @@ class winterfaceReader(commands.Cog):
         self.bot = bot
         self.activeMessages = []
 
+    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime):
+        # Connect to DB
+        conn = mysql.connector.connect(user='admin'
+                              , password='Bat7espu'
+                              ,host='dgsbot-db.c10qos1emenk.us-east-2.rds.amazonaws.com'
+                              ,port='3306'
+                              ,database='DGS_Hiscores')
+
+        query_string = "INSERT INTO submission_raw (playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime) values ('{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime)
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string)
+            floorID = cursor.lastrowid
+            cursor.close()
+            
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO submission_status (floorID, completedInd) values ({}, 0)".format(floorID))
+            conn.commit()
+        finally:
+            cursor.close()
+            conn.close()
+
+        return True
+    
     @commands.command(name="highscore")
     async def highscore(self, ctx, url):
         try:
@@ -85,7 +107,14 @@ class winterfaceReader(commands.Cog):
                     im.save(fname)
 
                 names = self.findNames(ctx)
+                print(names)
+                str(names)
                 time = self.findTime(ctx)
+                print(time)
+
+                # upload data to DB
+                self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = 'Frozen', endTime = time) # frozen hard coded for now
+
                 embed = self.generateEmbed(names,time)
                 message = await ctx.send(embed=embed)
                 await message.add_reaction("\U00002705")
