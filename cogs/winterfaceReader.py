@@ -29,6 +29,9 @@ class winterfaceReader(commands.Cog):
         self.bot = bot
         self.activeMessages = []
 
+        self.prodDGSBotID = 722758078310776832
+        self.testDGSBotID = 718483095262855280
+
     def makeConn(self):
         user = os.getenv('MYSQL_USER')
         password = os.getenv('MYSQL_PASSWORD')
@@ -101,17 +104,13 @@ class winterfaceReader(commands.Cog):
                 image = Image.open(io.BytesIO(r.content))
                 image.save("image.png")
                 img = cv2.imread("image.png",0)
-                # print (img)
-                # top_left,bottom_right = self.findWinterface(img)
-                # top_left,bottom_right = self.findWinterface2()
-                top_left,bottom_right = self.findWinterface3()
-                # self.findArrows()
+
+                top_left,bottom_right = self.findWinterface()
 
                 print (top_left,bottom_right)
                 
                 image = image.crop((top_left[0],top_left[1],bottom_right[0],bottom_right[1]))
                 image = image.resize((512,334))
-                # print (image.getpixel((0,0)))
                 image.save("hmm.png")
                 counter = 1
                 coordinates = {
@@ -122,13 +121,6 @@ class winterfaceReader(commands.Cog):
                     5:{"name":"rect","x":361,"y":236,"width":110,"height":19}
                 } 
 
-                # nonNamesCoordinates = {
-                #     "time":{"name":"rect","x":32,"y":306,"width":47,"height":12},
-                #     "floor":{"name":"rect","x":44,"y":54,"width":54,"height":15},
-                #     "level-mod":{"name":"rect","x":298,"y":158,"width":33,"height":17},
-                #     "bonus":{"name":"rect","x":300,"y":138,"width":31,"height":16}
-                # }
-
                 nonNamesCoordinates = {
                     "time":{"name":"rect","x":32,"y":306,"width":47,"height":12}
                 }
@@ -138,8 +130,6 @@ class winterfaceReader(commands.Cog):
                 }
 
                 (width,height) = image.width, image.height
-                # print (width)
-                # print (height)
 
                 for k,v in coordinates.items():
                     im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
@@ -172,7 +162,6 @@ class winterfaceReader(commands.Cog):
                 await message.add_reaction("\U00002705")
                 await message.add_reaction("\U0000274C")
                 self.activeMessages.append(message.id)
-                print (self.activeMessages)
                 
         except Exception as e:
             print(e)
@@ -214,7 +203,6 @@ class winterfaceReader(commands.Cog):
         return is_url_image(url) and check_url(url)
     
     def findArrows(self):
-        
         img_rgb = cv2.imread('winterfaces/winterface2.png')
         img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
         template = cv2.imread('winterfaces/arrows.png',0)
@@ -237,7 +225,7 @@ class winterfaceReader(commands.Cog):
         found_count = len(f)
         print (found_count)
 
-    def findWinterface3(self):
+    def findWinterface(self):
         template = cv2.imread('winterfaces/winterface3.png')
         template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
         template = cv2.Canny(template, 50, 200)
@@ -269,8 +257,6 @@ class winterfaceReader(commands.Cog):
             clone = np.dstack([edged, edged, edged])
             cv2.rectangle(clone, (maxLoc[0], maxLoc[1]),
                 (maxLoc[0] + tW, maxLoc[1] + tH), (0, 0, 255), 2)
-            # cv2.imshow("Visualize", clone)
-            # cv2.waitKey(0)
 
             # if we have found a new maximum correlation value, then update
             # the bookkeeping variable
@@ -287,117 +273,6 @@ class winterfaceReader(commands.Cog):
         cv2.rectangle(image, (startX, startY), (endX, endY), (0, 0, 255), 2)
         cv2.imwrite("hmm2.png",image)
         return (startX, startY), (endX, endY)
-
-    def findWinterface2(self):
-        image2 = cv2.imread('winterfaces/winterface3.png', cv2.IMREAD_COLOR)
-        image = cv2.imread('winterfaces/bardy.png', cv2.IMREAD_COLOR)
-        template = cv2.imread('winterfaces/arrows.png', cv2.IMREAD_COLOR)
-
-        h, w = template.shape[:2]
-
-        method = cv2.TM_CCOEFF_NORMED
-
-        threshold = 0.95
-
-        result = cv2.matchTemplate(image, template, cv2.TM_SQDIFF)
-        (min_x, max_y, minloc, maxloc) = cv2.minMaxLoc(result)
-        (x,y) = minloc
-
-        height,width = image.shape[:2]
-
-        #get all the matches:
-        result2 = np.reshape(result, result.shape[0]*result.shape[1])
-        sort = np.argsort(result2)
-        coords = np.unravel_index(sort[0], result.shape) # best match
-    
-
-        # all_rgb_codes = image2.reshape(-1, image.shape[-1])
-        # j = np.unique(all_rgb_codes, axis=0)
-        j = np.genfromtxt('colours.csv', delimiter=',',dtype="uint8")
-        black = np.array([0,0,0])
-        # print(black)
-
-        for x in j.tolist():
-            print (x)
-
-        # print(np.unravel_index(sort[1], result.shape)) # second best match
-        # print(np.unravel_index(sort[2], result.shape)) # best match
-        # print(np.unravel_index(sort[3], result.shape)) # second best match
-        # print(np.unravel_index(sort[4], result.shape)) # best match
-
-        endWinterfaceX = (0,0)
-        for x in range(coords[1],width-1):
-            if np.in1d(image[coords[0],x],j).any() and (image[coords[0],x] != black).all():
-            # if (image[coords[0],x] != black).all():
-                pass
-            else:
-                endWinterfaceX = (coords[0],x)
-                # print (endWinterfaceX)
-                print (image[coords[0],x].dtype)
-                break
-        
-        startWinterfaceX = (0,0)
-        for x in range(coords[1],0,-1):
-            if np.in1d(image[coords[0],x],j).any() and (image[coords[0],x] != black).all():
-            # if (image[coords[0],x] != black).all():
-                pass
-            else:
-                startWinterfaceX = (coords[0],x)
-                # print (startWinterfaceX)
-                print (image[coords[0],x])
-                break
-
-        endWinterfaceY = (0,0)
-        for y in range(coords[0],height-1):
-            if np.in1d(image[y,coords[1]],j).any() and (image[y,coords[1]] != black).all():
-            # if (image[y,coords[1]] != black).all():
-                pass
-            else:
-                endWinterfaceY = (y,coords[1])
-                # print (endWinterfaceY)
-                print (image[coords[0],x])
-                break
-
-        startWinterfaceY = (0,0)
-        for y in range(coords[0],0,-1):
-            if np.in1d(image[y,endWinterfaceX[1]],j).any() and (image[y,endWinterfaceX[1]] != black).all():
-            # if (image[y,endWinterfaceX[1]] != black).all():
-                pass
-            else:
-                startWinterfaceY = (y,coords[1])
-                # print (startWinterfaceY)
-                print (image[coords[0],x])
-                break
-
-
-        return (startWinterfaceX[1]+1,startWinterfaceY[0]+1),(endWinterfaceX[1]-1,endWinterfaceY[0]-1)
-
-    def findWinterface(self,img):
-        # img = self.unsharp_mask(img)
-        # img2 = img.copy()
-        template = cv2.imread('winterfaces/winterface2.png',0)
-        # template = self.unsharp_mask(template)
-        w, h = template.shape[::-1]
-        template = self.image_resize(template,width=w*2,height=h*2)
-        # All the 6 methods for comparison in a list
-        # methods = [cv2.TM_CCOEFF, cv2.TM_CCOEFF_NORMED, cv2.TM_CCORR,
-        #             cv2.TM_CCORR_NORMED, cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]
-        # for method in methods:
-        # img = img2.copy()
-        method = cv2.TM_CCOEFF
-        # Apply template Matching
-        res = cv2.matchTemplate(img,template,method)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-
-
-        # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
-        if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-            top_left = min_loc
-        else:
-            top_left = max_loc
-        bottom_right = (top_left[0] + w, top_left[1] + h)
-        print (top_left,bottom_right)
-        return top_left,bottom_right
 
     def image_resize(self, image, width = None, height = None, inter = cv2.INTER_AREA):
         # initialize the dimensions of the image to be resized and
@@ -560,19 +435,9 @@ class winterfaceReader(commands.Cog):
 
             print (matchFound,rowX,rowY,fullTime)
 
-            # if rowX == 0:
-            #     print ("Couldn't find time")
-            #     continue
-
-            # for x in range(rowX + 1,twidth - glwidth + 1):
-            #     im = time.crop((x, rowY, x + glwidth, rowY + glheight))
-            #     if equal(im,zero):
-            #         fullTime[x] = 0
-
-            # breakAt = 0
             for k,v in floorChars.items():
                 fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
-                # print (fullTime)
+
             decoded = (decoder(fullTime))
             if decoded in range(1,12):
                 return "Frozen"
@@ -588,7 +453,6 @@ class winterfaceReader(commands.Cog):
                 return "Warped"
             else:
                 return "N/A"
-
 
 
     def findTime(self,ctx):
@@ -714,13 +578,8 @@ class winterfaceReader(commands.Cog):
             for x in range(twidth - glwidth):
                 for y in range(theight - glheight ):
                     im = time.crop((x, y, x + glwidth, y + glheight))
-                    # im.save("test/" + str(x) + " " + str(y) +".png")
-                    # if equal(im,zero):
-                    # print (fuzzyEqual(im,zero))
                     
                     if fuzzyEqual(im,zero) < 0.05:
-                        # print ("match found at ",x,y)
-                        # print (fuzzyEqual(im,zero))
                         charDict= {"character":charName,"charLength":glwidth}
                         fullTime[x] = charDict
                         mainX = x
@@ -735,12 +594,7 @@ class winterfaceReader(commands.Cog):
             timeDictList = (sorted(fullTime))
             timeStr = ""
             prevX = 0
-            # print (fullTime)
-            # print (timeDictList)
             for x in timeDictList:
-                # print (prevX)
-                # print (fullTime[x])
-                # print ("diff:",x - prevX)
                 if (x - prevX > 3 and prevX > 0):
                     timeStr = timeStr + " " + str(fullTime[x]["character"])
                 elif x-prevX < 0:
@@ -755,9 +609,7 @@ class winterfaceReader(commands.Cog):
             zero = zero.convert('1')
             (glwidth,glheight) = zero.width, zero.height
             for x in range(0,twidth - glwidth + 1):
-                # print ((x, rowY, x + glwidth, rowY + glheight))
                 im = time.crop((x, rowY, x + glwidth, rowY + glheight))
-                # im.save("testRowOther/" + str(x) + " " + str(rowY) + ".png")
                 if fuzzyEqual(im,zero) < 0.05:
                     charDict= {"character":k,"charLength":glwidth}
                     fullTime[x] = charDict
@@ -840,21 +692,12 @@ class winterfaceReader(commands.Cog):
             name = "Couldn't find name"
             fullTime = {}
             fname = "character/" + t
-            # print (fname)
             time = Image.open(fname)
-
             enhancer = ImageEnhance.Contrast(time)
             time = enhancer.enhance(2)
 
-
             (twidth,theight) = time.width, time.height
-
-            # print (twidth,theight)
-
             time = time.convert('1')
-            
-            
-            
             
             rows,cols = time.size
             for i in range(1,rows-1):
@@ -866,7 +709,6 @@ class winterfaceReader(commands.Cog):
             time.save("ahh/" + t + "test.png")
             matchFound = False
             for k,v in chars.items():
-                # print ("trying:",k)
                 zero = Image.open(v)
                 zero = zero.convert('1')
                 matchFound,rowX,rowY = (findRow(zero,time,k))
@@ -909,7 +751,6 @@ class winterfaceReader(commands.Cog):
             if name == None: 
                 name = "None found"
             elif len(name) > 0:
-                # namesDict[name] = None
                 jsonHandling.dumpJSON(fname,namesDict)
                 print ("name=====",name)
                 namesFound.append(name)
@@ -917,11 +758,14 @@ class winterfaceReader(commands.Cog):
                 namesFound.append("None")
         return namesFound
 
-    async def notGood(self,data,floorID):
+    async def notGood(self, data, member, floorID):
         webUrl = "http://www.dgsbot.com/" + str(floorID) + str(data[0][2])
-        print (webUrl)
+        await member.create_dm()
+        await member.dm_channel.send(
+            'Hi - you can access your submission to edit it at the following link: {}\nYour submission will not be added until you access the link and submit changes.'.format(webUrl)
+        )
 
-    async def validateFloor(self,data,floorID):
+    async def validateFloor(self, data, floorID):
         print (data)
         self.updateSubmissionStatus(floorID = data[0][0], completedInd = 1)
 
@@ -935,20 +779,21 @@ class winterfaceReader(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self,payload):
-        if payload.message_id in self.activeMessages and payload.user_id != 722758078310776832 and payload.user_id != 718483095262855280:
+        if payload.message_id in self.activeMessages and payload.user_id != self.prodDGSBotID and payload.user_id != self.testDGSBotID:
+            guild = self.bot.get_guild(payload.guild_id)
+            member = guild.get_member(payload.user_id)
             if payload.emoji.name == "\U00002705":
                 data, floorID = await self.getFloor(payload)
                 await self.validateFloor(data,floorID)
             elif payload.emoji.name == "\U0000274C":
                 data, floorID = await self.getFloor(payload)
-                await self.notGood(data,floorID)
+                await self.notGood(data, member, floorID)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send('You do not have the correct role for this command.')
     
-
 
 def setup(bot):
     bot.add_cog(winterfaceReader(bot))
