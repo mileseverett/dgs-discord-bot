@@ -45,6 +45,25 @@ class winterfaceReader(commands.Cog):
                               ,database='DGS_Hiscores')
         return conn
 
+    def checkAndUpdateName(self, cursor, player):
+        '''
+        Check if the name exists already in the association table. If there is no entry for this person add one (they are new!)
+
+        @params
+        - cursor: cursor pointing to the DB instance
+        - player: character string of the player to compare/add
+        '''
+        query_string = "select hiscoreName from rsn_association where associatedName = '{}'".format(str(player))
+        playerCheck = cursor.execute(query_string)
+
+        if playerCheck:
+            return True
+        else:
+            query_string = "insert into rsn_association (hiscoreName, associatedName) values ('{}', '{}')".format(str(player), str(player))
+            cursor.execute(query_string)
+
+        return True
+
     def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, submitterID, secretValue):
         # Connect to DB
         conn = self.makeConn()
@@ -57,8 +76,17 @@ class winterfaceReader(commands.Cog):
             cursor.close()
             
             cursor = conn.cursor()
-            print ("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink, submitterID) values ({}, 0, 0, '{}', '{}')".format(floorID,secretValue, submitterID))
             cursor.execute("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink, submitterID) values ({}, 0, 0, '{}', '{}')".format(floorID,secretValue, submitterID))
+            cursor.close()
+
+            cursor = conn.cursor()
+            self.checkAndUpdateName(cursor, playerOne)
+            self.checkAndUpdateName(cursor, playerTwo)
+            self.checkAndUpdateName(cursor, playerThree)
+            self.checkAndUpdateName(cursor, playerFour)
+            self.checkAndUpdateName(cursor, playerFive)
+            cursor.close()
+
             conn.commit()
         finally:
             cursor.close()
