@@ -148,7 +148,7 @@ class winterfaceReader(commands.Cog):
                 } 
 
                 nonNamesCoordinates = {
-                    "time":{"name":"rect","x":32,"y":306,"width":47,"height":12}
+                    "time":{"name":"rect","x":30,"y":306,"width":50,"height":12}
                 }
 
                 themeCoordinates = {
