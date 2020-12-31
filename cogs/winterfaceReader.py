@@ -45,7 +45,7 @@ class winterfaceReader(commands.Cog):
                               ,database='DGS_Hiscores')
         return conn
 
-    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime,imageLink,secretValue):
+    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, secretValue):
         # Connect to DB
         conn = self.makeConn()
 
@@ -57,8 +57,8 @@ class winterfaceReader(commands.Cog):
             cursor.close()
             
             cursor = conn.cursor()
-            print ("INSERT INTO submission_status (floorID, completedInd, websiteLink) values ({}, 0, '{}')".format(floorID,secretValue))
-            cursor.execute("INSERT INTO submission_status (floorID, completedInd, websiteLink) values ({}, 0, '{}')".format(floorID,secretValue))
+            print ("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink) values ({}, 0, 0, '{}')".format(floorID,secretValue))
+            cursor.execute("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink) values ({}, 0, 0, '{}')".format(floorID,secretValue))
             conn.commit()
         finally:
             cursor.close()
@@ -81,10 +81,10 @@ class winterfaceReader(commands.Cog):
             conn.close()
             return data
 
-    def updateSubmissionStatus(self,floorID,completedInd):
+    def updateSubmissionStatus(self,floorID,userCompletedInd):
         conn = self.makeConn()
 
-        query_string = "UPDATE submission_status set completedInd = 1 WHERE floorID = {};".format(int(floorID))
+        query_string = "UPDATE submission_status set userCompletedInd = 1 WHERE floorID = {};".format(int(floorID))
         try:
             cursor = conn.cursor()
             cursor.execute(query_string)
@@ -767,7 +767,7 @@ class winterfaceReader(commands.Cog):
 
     async def validateFloor(self, data, floorID):
         print (data)
-        self.updateSubmissionStatus(floorID = data[0][0], completedInd = 1)
+        self.updateSubmissionStatus(floorID = data[0][0], userCompletedInd = 1)
 
     async def getFloor(self,payload):
         channel = self.bot.get_channel(payload.channel_id)
