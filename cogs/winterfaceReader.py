@@ -45,11 +45,11 @@ class winterfaceReader(commands.Cog):
                               ,database='DGS_Hiscores')
         return conn
 
-    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, secretValue):
+    def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, submitterID, secretValue):
         # Connect to DB
         conn = self.makeConn()
 
-        query_string = "INSERT INTO submission_raw (playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink) values ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink)
+        query_string = "INSERT INTO submission_raw (playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, submitterID) values ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')".format(playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, submitterID)
         try:
             cursor = conn.cursor()
             cursor.execute(query_string)
@@ -57,8 +57,8 @@ class winterfaceReader(commands.Cog):
             cursor.close()
             
             cursor = conn.cursor()
-            print ("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink) values ({}, 0, 0, '{}')".format(floorID,secretValue))
-            cursor.execute("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink) values ({}, 0, 0, '{}')".format(floorID,secretValue))
+            print ("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink, submitterID) values ({}, 0, 0, '{}', '{}')".format(floorID,secretValue, submitterID))
+            cursor.execute("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink, submitterID) values ({}, 0, 0, '{}', '{}')".format(floorID,secretValue, submitterID))
             conn.commit()
         finally:
             cursor.close()
@@ -155,7 +155,7 @@ class winterfaceReader(commands.Cog):
                 print(time)
 
                 # upload data to DB
-                success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, secretValue = random32)
+                success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, submitterID = ctx.message.author.id, secretValue = random32)
 
                 embed = self.generateEmbed(names,time,theme,floorID)
                 message = await ctx.send(embed=embed)
@@ -759,7 +759,7 @@ class winterfaceReader(commands.Cog):
         return namesFound
 
     async def notGood(self, data, member, floorID):
-        webUrl = "http://www.dgsbot.com/" + str(floorID) + str(data[0][2])
+        webUrl = "http://www.dgsbot.com/" + str(floorID) + str(data[0][3])
         await member.create_dm()
         await member.dm_channel.send(
             'Hi - you can access your submission to edit it at the following link: {}\nYour submission will not be added until you access the link and submit changes.'.format(webUrl)
