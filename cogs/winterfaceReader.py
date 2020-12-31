@@ -179,7 +179,7 @@ class winterfaceReader(commands.Cog):
                 theme = self.findTheme(ctx)
 
                 # upload data to DB
-                success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, submitterID = ctx.message.author.id, secretValue = random32)
+                success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, submitterID = str(ctx.author.id), secretValue = random32)
 
                 embed = self.generateEmbed(names,time,theme,floorID)
                 message = await ctx.send(embed=embed)
@@ -774,11 +774,16 @@ class winterfaceReader(commands.Cog):
         if payload.message_id in self.activeMessages and payload.user_id != self.prodDGSBotID and payload.user_id != self.testDGSBotID:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
-            if payload.emoji.name == "\U00002705":
-                data, floorID = await self.getFloor(payload)
+            data, floorID = await self.getFloor(payload)
+            conn = self.makeConn()
+            cursor = conn.cursor()
+
+            cursor.execute("select submitterID from DGS_Hiscores.submission_status where floorID = '{}'".format(int(floorID)))
+            userID = cursor.fetchone()
+
+            if payload.emoji.name == "\U00002705" and (payload.user_id == int(userID[0]) or 'dgs hiscore mod' in member.roles):
                 await self.validateFloor(data,floorID)
-            elif payload.emoji.name == "\U0000274C":
-                data, floorID = await self.getFloor(payload)
+            elif payload.emoji.name == "\U0000274C" and (payload.user_id == int(userID[0]) or 'dgs hiscore mod' in member.roles):
                 await self.notGood(data, member, floorID)
 
     @commands.Cog.listener()
@@ -786,6 +791,5 @@ class winterfaceReader(commands.Cog):
         if isinstance(error, commands.errors.CheckFailure):
             await ctx.send('You do not have the correct role for this command.')
     
-
 def setup(bot):
     bot.add_cog(winterfaceReader(bot))
