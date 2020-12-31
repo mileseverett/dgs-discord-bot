@@ -54,7 +54,8 @@ class winterfaceReader(commands.Cog):
         - player: character string of the player to compare/add
         '''
         query_string = "select hiscoreName from rsn_association where associatedName = '{}'".format(str(player))
-        playerCheck = cursor.execute(query_string)
+        cursor.execute(query_string)
+        playerCheck = cursor.fetchone()
 
         if playerCheck:
             return True
@@ -62,6 +63,7 @@ class winterfaceReader(commands.Cog):
             query_string = "insert into rsn_association (hiscoreName, associatedName) values ('{}', '{}')".format(str(player), str(player))
             cursor.execute(query_string)
 
+        cursor.reset()
         return True
 
     def uploadToDB(self, playerOne, playerTwo, playerThree, playerFour, playerFive, theme, endTime, imageLink, submitterID, secretValue):
@@ -478,7 +480,7 @@ class winterfaceReader(commands.Cog):
             (twidth,theight) = time.width, time.height
             for x in range(twidth - glwidth):
                 for y in range(theight - glheight ):
-                    im = time.crop((x, y, x + glwidth, y + glheight)))
+                    im = time.crop((x, y, x + glwidth, y + glheight))
                     
                     if fuzzyEqual(im,zero) < 0.10:
                         fullTime[x] = 0
