@@ -39,7 +39,7 @@ class winterfaceReader(commands.Cog):
         port = os.getenv('MYSQL_PORT')
 
         conn = mysql.connector.connect(user=user
-                              , password=password
+                              ,password=password
                               ,host=host
                               ,port=port
                               ,database='DGS_Hiscores')
@@ -119,13 +119,11 @@ class winterfaceReader(commands.Cog):
             conn.commit()
         finally:
             if (conn.is_connected()):
-                conn.close()
-                print("MySQL connection is closed")        
+                conn.close()     
 
     @commands.command(name="highscore")
     async def highscore(self, ctx, url):
         try:
-            print (url)
             isValid = (self.is_url_image(url))
             if isValid == True:
                 r = requests.get(url)
@@ -134,8 +132,6 @@ class winterfaceReader(commands.Cog):
                 img = cv2.imread("image.png",0)
 
                 top_left,bottom_right = self.findWinterface()
-
-                print (top_left,bottom_right)
                 
                 image = image.crop((top_left[0],top_left[1],bottom_right[0],bottom_right[1]))
                 image = image.resize((512,334))
@@ -176,11 +172,9 @@ class winterfaceReader(commands.Cog):
                 letters = string.ascii_lowercase
                 random32 = ( ''.join(random.choice(letters) for i in range(32)) )
                 names = self.findNames(ctx)
-                print(names)
                 str(names)
                 time = self.findTime(ctx)
                 theme = self.findTheme(ctx)
-                print(time)
 
                 # upload data to DB
                 success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, submitterID = ctx.message.author.id, secretValue = random32)
@@ -213,6 +207,7 @@ class winterfaceReader(commands.Cog):
     def check_url(self,url):
         """Returns True if the url returns a response code between 200-300,
         otherwise return False.
+
         """
         try:
             headers = {
@@ -251,7 +246,6 @@ class winterfaceReader(commands.Cog):
         cv2.imwrite('res.png',img_rgb)
 
         found_count = len(f)
-        print (found_count)
 
     def findWinterface(self):
         template = cv2.imread('winterfaces/winterface3.png')
@@ -362,13 +356,8 @@ class winterfaceReader(commands.Cog):
             for x in range(twidth - glwidth):
                 for y in range(theight - glheight ):
                     im = time.crop((x, y, x + glwidth, y + glheight))
-                    # im.save("test/" + str(x) + " " + str(y) +".png")
-                    # if equal(im,zero):
-                    # print (fuzzyEqual(im,zero))
-                    
+
                     if fuzzyEqual(im,zero) < 0.05:
-                        # print ("match found at ",x,y)
-                        # print (fuzzyEqual(im,zero))
                         charDict= {"character":charName,"charLength":glwidth}
                         fullTime[x] = charDict
                         mainX = x
@@ -380,9 +369,7 @@ class winterfaceReader(commands.Cog):
             return False,mainX, mainY
 
         def decoder(fullTime):
-            print (fullTime)
             timeDictList = (sorted(fullTime))
-            print ("timeDictList",timeDictList)
             timeStr = ""
             for x in timeDictList:
                 timeStr = timeStr + str(fullTime[x]["character"])
@@ -417,12 +404,9 @@ class winterfaceReader(commands.Cog):
         for file in os.listdir("./floor"):
             times.append(file)
 
-        print (times)
-
         for t in times:
             fullTime = {}
             fname = "floor/" + t
-            print (fname)
             time = Image.open(fname)
             zero = Image.open("glypths/time0.png")
             
@@ -444,24 +428,19 @@ class winterfaceReader(commands.Cog):
             (glwidth,glheight) = zero.width, zero.height
             (twidth,theight) = time.width, time.height
 
-            # print (twidth,theight)
 
             time = time.convert('1')
             time.save("ahh/" + t + "test.png")
-            # rowX,rowY = (findRow(zero,time))
             
             foundChar = "Not Found"
             matchFound = False
             for k,v in floorChars.items():
-                # print ("trying:",k)
                 zero = Image.open(v)
                 zero = zero.convert('1')
                 matchFound,rowX,rowY = (findRow(zero,time,k))
                 if matchFound == True:
                     fullTime[rowX] = k
                     break
-
-            print (matchFound,rowX,rowY,fullTime)
 
             for k,v in floorChars.items():
                 fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
@@ -499,14 +478,9 @@ class winterfaceReader(commands.Cog):
             (twidth,theight) = time.width, time.height
             for x in range(twidth - glwidth):
                 for y in range(theight - glheight ):
-                    im = time.crop((x, y, x + glwidth, y + glheight))
-                    # im.save("test/" + str(x) + " " + str(y) +".png")
-                    # if equal(im,zero):
-                    # print (fuzzyEqual(im,zero))
+                    im = time.crop((x, y, x + glwidth, y + glheight)))
                     
                     if fuzzyEqual(im,zero) < 0.10:
-                        # print ("match found")
-                        # print (fuzzyEqual(im,zero))
                         fullTime[x] = 0
                         mainX = x
                         mainY = y
@@ -517,7 +491,6 @@ class winterfaceReader(commands.Cog):
             return mainX, mainY
 
         def decoder(fullTime):
-            print (fullTime)
             timeDictList = (sorted(fullTime))
             timeStr = ""
             for x in timeDictList:
@@ -529,12 +502,9 @@ class winterfaceReader(commands.Cog):
             (glwidth,glheight) = zero.width, zero.height
             for x in range(twidth - glwidth + 1):
                 im = time.crop((x, rowY, x + glwidth, rowY + glheight))
-                # im.save("testRowOther/" + str(x) + " " + str(rowY) + ".png")
                 if equal(im,zero):
                     fullTime[x] = k
-                    # breakAt = x + glwidth
             return fullTime
-
 
         nonZeros = {
             1:"glypths/time1.png",
@@ -552,12 +522,9 @@ class winterfaceReader(commands.Cog):
         for file in os.listdir("./times"):
             times.append(file)
 
-        print (times)
-
         for t in times:
             fullTime = {}
             fname = "times/" + t
-            print (fname)
             time = Image.open(fname)
             zero = Image.open("glypths/time0.png")
 
@@ -566,8 +533,6 @@ class winterfaceReader(commands.Cog):
 
             (glwidth,glheight) = zero.width, zero.height
             (twidth,theight) = time.width, time.height
-
-            # print (twidth,theight)
 
             time = time.convert('1')
             time.save("ahh/" + t + "test.png")
@@ -756,8 +721,6 @@ class winterfaceReader(commands.Cog):
             for k,v in chars.items():
                 fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
 
-            print (fullTime)
-            print (decoder(fullTime))
             name = decoder(fullTime)
             fname = "names/names.json"
             namesDict = jsonHandling.loadJSON(fname)
@@ -794,7 +757,6 @@ class winterfaceReader(commands.Cog):
         )
 
     async def validateFloor(self, data, floorID):
-        print (data)
         self.updateSubmissionStatus(floorID = data[0][0], userCompletedInd = 1)
 
     async def getFloor(self,payload):
