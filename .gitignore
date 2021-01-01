@@ -3,4 +3,6 @@ test.py
 *.pyc
 *.json
 !names/names.json
-
+*.png
+!charGlyph/*.png
+!glypths/*.png
