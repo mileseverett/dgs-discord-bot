@@ -6,4 +6,8 @@ test.py
 *.png
 !charGlyph/*.png
 !glypths/*.png
-!winterfaces/*.png
+!ahh/*.png
+!floor/*.png
+!winterfacePictures/*.png
+!test/*.png
+!times/*.png
