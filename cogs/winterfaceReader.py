@@ -228,9 +228,9 @@ class winterfaceReader(commands.Cog):
         return is_url_image(url) and check_url(url)
     
     def findArrows(self):
-        img_rgb = cv2.imread('winterfaces/winterface2.png')
+        img_rgb = cv2.imread('winterfacePictures/winterfaceExample.png')
         img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
-        template = cv2.imread('winterfaces/arrows.png',0)
+        template = cv2.imread('winterfacePictures/arrows.png', 0)
         w, h = template.shape[::-1]
 
         res = cv2.matchTemplate(img_gray,template,cv2.TM_CCOEFF_NORMED)
@@ -250,7 +250,7 @@ class winterfaceReader(commands.Cog):
         found_count = len(f)
 
     def findWinterface(self):
-        template = cv2.imread('winterfaces/winterface3.png')
+        template = cv2.imread('winterfacePictures/winterfaceExample2.png')
         template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
         template = cv2.Canny(template, 50, 200)
         (tH, tW) = template.shape[:2]

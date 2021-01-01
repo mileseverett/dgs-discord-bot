@@ -6,3 +6,4 @@ test.py
 *.png
 !charGlyph/*.png
 !glypths/*.png
+!winterfaces/*.png
