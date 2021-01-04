@@ -45,6 +45,25 @@ class winterfaceReader(commands.Cog):
                               ,database='DGS_Hiscores')
         return conn
 
+    def getNames(self):
+        '''
+        Retrieve a list of tuples which contain any player which has already been submitted before.
+        '''
+        conn = self.makeConn()
+
+        query_string = "SELECT * FROM DGS_Hiscores.playerAppearances"
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string)
+            data = cursor.fetchall()
+            cursor.close()
+            conn.commit()
+        finally:
+            if (conn.is_connected()):
+                conn.close()
+            return data  
+        
+
     def checkAndUpdateName(self, cursor, player):
         '''
         Check if the name exists already in the association table. If there is no entry for this person add one (they are new!)
@@ -726,8 +745,11 @@ class winterfaceReader(commands.Cog):
             name = decoder(fullTime)
             fname = "names/names.json"
             namesDict = jsonHandling.loadJSON(fname)
-            possibleDgers = list(namesDict.keys())
-
+            # print(self.getNames())
+            # possibleDgers = list(namesDict)
+            possibleDgers = []
+            for x in self.getNames():
+                possibleDgers.append(x[0])
             if name in possibleDgers:
                 print (fname[:-4],name)
             elif name is None:
