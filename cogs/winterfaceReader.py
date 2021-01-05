@@ -141,6 +141,77 @@ class winterfaceReader(commands.Cog):
         finally:
             if (conn.is_connected()):
                 conn.close()     
+    
+    @commands.command(name = "addHiscoreAlias")
+    async def addAlias(self, ctx, hiscoreName:str, newAlias:str):
+        '''
+        Add a new alias to the DB for a given hiscore name
+
+        @params
+        - hiscoreName: RSN/name used in the hiscores are the main name
+        - newAlias: new alias name to add/assoicate to the hiscoreName in the DB
+        '''
+        conn = self.makeConn()
+        query_string = "SELECT associatedName FROM DGS_Hiscores.rsn_association where hiscoreName = %s"
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string, (hiscoreName,))
+            playerData = cursor.fetchall()
+            cursor.close()
+            if not playerData[0][0]:
+                await ctx.send("Name not found in the database to add an alias too, check your provided name.")
+            else:
+                query_string = "insert into DGS_Hiscores.rsn_association values (%s, %s)"
+                cursor = conn.cursor()
+                cursor.execute(query_string, (playerData[0][0], newAlias))
+                conn.commit()
+                await ctx.send("Added new secondary name")
+        finally:
+            if (conn.is_connected()):
+                conn.close()
+        return 1
+    
+    @commands.command(name = "getAllAliases")
+    async def getAlias(self, ctx, hiscoreName:str):
+        conn = self.makeConn()
+        query_string = "SELECT associatedName FROM DGS_Hiscores.rsn_association where hiscoreName = {}}"
+        embed=discord.Embed(title="Names")
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string, (hiscoreName,))
+            playerData = cursor.fetchall()
+            cursor.close()
+            for count, name in enumerate(playerData):
+                embed.add_field(name = count+1, value = name[0], inline=False)
+        finally:
+            if (conn.is_connected()):
+                conn.close()
+        await ctx.send(embed = embed)
+    
+    @commands.command(name = "acceptHiscores")
+    async def generateAdminHiscorePage(self, ctx):
+        randInt = random.randint(1000, 100000000)
+        random32 = ( ''.join(random.choice(string.ascii_lowercase) for i in range(32)) )
+        conn = self.makeConn()
+        query_string = "insert into DGS_Hiscores.admin_links (sessionID, websiteString, purpose, submitterID) values (%s, %s, %s, %s)"
+
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query_string, (randInt, random32, "DGS Hiscores", str(ctx.author.id)))
+            cursor.close()
+            conn.commit()
+
+            adminURL = "http://www.dgsbot.com/hiscore/" + str(randInt) + str(random32)
+            await ctx.message.author.send("Your link is " + adminURL + ". It will be good for 24 hours.")
+            await ctx.send("PM sent")
+
+        finally:
+            if (conn.is_connected()):
+                conn.close()
+        
+        return 1
 
     @commands.command(name="highscore")
     async def highscore(self, ctx, url):
