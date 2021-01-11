@@ -203,7 +203,7 @@ class winterfaceReader(commands.Cog):
             cursor.close()
             conn.commit()
 
-            adminURL = "http://www.dgsbot.com/hiscore/" + str(randInt) + str(random32)
+            adminURL = "http://www.dgsbot.com/hiscore/admin/" + str(randInt) + str(random32)
             await ctx.message.author.send("Your link is " + adminURL + ". It will be good for 24 hours.")
             await ctx.send("PM sent")
 
@@ -845,7 +845,7 @@ class winterfaceReader(commands.Cog):
         return namesFound
 
     async def notGood(self, data, member, floorID):
-        webUrl = "http://www.dgsbot.com/" + str(floorID) + str(data[0][3])
+        webUrl = "http://www.dgsbot.com/hiscore/" + str(floorID) + str(data[0][3])
         await member.create_dm()
         await member.dm_channel.send(
             'Hi - you can access your submission to edit it at the following link: {}\nYour submission will not be added until you access the link and submit changes.'.format(webUrl)
