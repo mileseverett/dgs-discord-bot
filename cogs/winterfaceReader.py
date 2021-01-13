@@ -192,6 +192,18 @@ class winterfaceReader(commands.Cog):
                 cursor = conn.cursor()
                 cursor.execute("update DGS_Hiscores.rsn_association set hiscoreName = '{}' where hiscoreName = '{}'".format(str(newName), str(previousName)))
                 cursor.execute("insert into DGS_Hiscores.rsn_association values ('{}', '{}')".format(str(newName), str(previousName)))
+                # --- Raw table --- #
+                cursor.execute("update DGS_Hiscores.submission_raw set playerOne = '{}' where playerOne = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerTwo = '{}' where playerTwo = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerThree = '{}' where playerThree = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerFour = '{}' where playerFour = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerFive = '{}' where playerFive = '{}'".format(str(newName), str(previousName)))
+                # --- Accepted table --- #
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerOne = '{}' where playerOne = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerTwo = '{}' where playerTwo = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerThree = '{}' where playerThree = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerFour = '{}' where playerFour = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerFive = '{}' where playerFive = '{}'".format(str(newName), str(previousName)))
                 conn.commit()
                 await ctx.send("Updated name to: " + str(newName))
         finally:
