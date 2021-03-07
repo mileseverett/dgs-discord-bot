@@ -6,8 +6,8 @@ import json
 import discord
 from discord.ext import commands
 
-from utils import jsonHandling
-from utils.misc import createFolder
+from utilities import jsonHandling
+from utilities.misc import createFolder
 
 class adminSystem(commands.Cog):
     

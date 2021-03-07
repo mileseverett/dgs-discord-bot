@@ -5,7 +5,7 @@ import json
 import sys, traceback
 
 from discord import Embed
-from utils import jsonHandling
+from utilities import jsonHandling
 
 def getRoles(allRoles):
     """

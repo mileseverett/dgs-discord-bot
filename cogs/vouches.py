@@ -8,8 +8,8 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from utils import jsonHandling, bufferHandling
-from utils.misc import createFolder
+from utilities import jsonHandling, bufferHandling
+from utilities.misc import createFolder
 
 class vouchSystem(commands.Cog):
     

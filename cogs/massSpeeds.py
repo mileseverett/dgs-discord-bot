@@ -7,8 +7,8 @@ import discord
 from discord.ext import commands
 from discord.utils import get
 
-from utils.misc import getRoles, createFolder
-from utils import jsonHandling
+from utilities.misc import getRoles, createFolder
+from utilities import jsonHandling
 
 class massSpeeds(commands.Cog):
     
