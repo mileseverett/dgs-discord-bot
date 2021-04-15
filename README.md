@@ -36,6 +36,14 @@ A discord bot to serve all of DGS's needs. Created mostly by Miles with help fro
 - $msend: Ends the current mass speeds session.
 - $msteams: Generates and outputs weighted randomized teams based on DGS rank.
 
+#### DGS Hiscores
+- $hiscore: Submit a DGS hiscore to be parsed by the bot. Also allows you to accept/reject the submission.
+- $addHiscoreAlias: Add a new secondary RSN/name that is associated to your main name.
+- $changeHiscoreName: Change the primary RSN/name on the website.
+- $getAllAliases: Get all of the secondary names associated to a primary name.
+- $acceptHiscores: Admin function to generate a website link to accept hiscores.
+
+
 ## Contributing
 If you want to help contribute you can clone the repo and make local changes. You can run the bot locally to test your changes (we have an existing discord server or you can make your own), and the bot runs off of AWS. If you need access to the "production" version contact Miles or EB.
 
