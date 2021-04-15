@@ -214,12 +214,12 @@ class winterfaceReader(commands.Cog):
     @commands.command(name = "getAllAliases")
     async def getAlias(self, ctx, hiscoreName:str):
         conn = self.makeConn()
-        query_string = "SELECT associatedName FROM DGS_Hiscores.rsn_association where hiscoreName = {}}"
+        query_string = "SELECT associatedName FROM DGS_Hiscores.rsn_association where hiscoreName = '{}'".format(str(hiscoreName))
         embed=discord.Embed(title="Names")
 
         try:
             cursor = conn.cursor()
-            cursor.execute(query_string, (hiscoreName,))
+            cursor.execute(query_string)
             playerData = cursor.fetchall()
             cursor.close()
             for count, name in enumerate(playerData):
