@@ -139,7 +139,7 @@ class massSpeeds(commands.Cog):
         if "msActive" in settings.keys():
             if settings["msActive"] == False:
                 message = await ctx.send("React to this message to join the mass speeds session.")
-                self.messageID = (message.id)
+                self.messageID = (message)
                 self.message = message
                 await message.add_reaction("<a:EB:744967488751665303>")
                 settings["msActive"] = True
@@ -307,6 +307,10 @@ class massSpeeds(commands.Cog):
         Remove a member from the Mass Speeds list
 
         """
+        print (type(self.messageID))
+        print ("messageID",self.messageID)
+        print ("messageID.id",self.messageID.id)
+        print ("message_id",payload.message_id)
         if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != self.prodDGSBotID and payload.user_id != self.testDGSBotID:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
@@ -321,6 +325,10 @@ class massSpeeds(commands.Cog):
         Adds a member to the Mass Speeds list
 
         """
+        print (type(self.messageID))
+        print ("messageID",self.messageID)
+        print ("messageID.id",self.messageID.id)
+        print ("message_id",payload.message_id)
         if self.messageID.id == payload.message_id and payload.emoji.name == "EB" and payload.user_id != self.prodDGSBotID and payload.user_id != self.testDGSBotID:
             guild = self.bot.get_guild(payload.guild_id)
             member = guild.get_member(payload.user_id)
