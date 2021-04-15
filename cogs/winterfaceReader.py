@@ -100,7 +100,7 @@ class winterfaceReader(commands.Cog):
             cursor.execute("INSERT INTO submission_status (floorID, userCompletedInd, adminReviewInd, websiteLink, submitterID) values ({}, 0, 0, '{}', '{}')".format(floorID,secretValue, submitterID))
             cursor.close()
 
-            cursor = conn.cursor()
+            cursor = conn.cursor(buffered=True)
             self.checkAndUpdateName(cursor, playerOne)
             self.checkAndUpdateName(cursor, playerTwo)
             self.checkAndUpdateName(cursor, playerThree)
@@ -267,6 +267,7 @@ class winterfaceReader(commands.Cog):
                 str(names)
                 time = self.findTime(ctx)
                 theme = self.findTheme(ctx)
+                print (theme)
 
                 # upload data to DB
                 success,floorID = self.uploadToDB(playerOne = names[0], playerTwo = names[1], playerThree = names[2], playerFour = names[3], playerFive = names[4], theme = theme, endTime = time, imageLink=url, submitterID = str(ctx.author.id), secretValue = random32)
@@ -379,6 +380,10 @@ class winterfaceReader(commands.Cog):
 
         # unpack the bookkeeping variable and compute the (x, y) coordinates
         # of the bounding box based on the resized ratio
+        print (type(found))
+        if found == None:
+            print ("Yep")
+            return (0, 0), (0, 0)
         (_, maxLoc, r) = found
         (startX, startY) = (int(maxLoc[0] * r), int(maxLoc[1] * r))
         (endX, endY) = (int((maxLoc[0] + tW) * r), int((maxLoc[1] + tH) * r))
@@ -386,6 +391,7 @@ class winterfaceReader(commands.Cog):
         # draw a bounding box around the detected result and display the image
         cv2.rectangle(image, (startX, startY), (endX, endY), (0, 0, 255), 2)
         cv2.imwrite("hmm2.png",image)
+        print (startX, startY, endX, endY)
         return (startX, startY), (endX, endY)
 
     def image_resize(self, image, width = None, height = None, inter = cv2.INTER_AREA):
@@ -463,9 +469,15 @@ class winterfaceReader(commands.Cog):
         def decoder(fullTime):
             timeDictList = (sorted(fullTime))
             timeStr = ""
+            print ("timeDict:",timeDictList)
             for x in timeDictList:
-                timeStr = timeStr + str(fullTime[x]["character"])
-            return int(timeStr)
+                print (x)
+                timeStr = str(timeStr) + str(fullTime[x]["character"])
+                try:
+                    timeStr = int(timeStr)
+                except ValueError:
+                    timeStr = 0
+            return timeStr
 
         def findNonZeros(filepath,fullTime,glwidth,glheight,k):
             zero = Image.open(filepath)
@@ -536,8 +548,9 @@ class winterfaceReader(commands.Cog):
 
             for k,v in floorChars.items():
                 fullTime = findNonZeros(v,fullTime,glwidth,glheight,k)
-
+            print (fullTime)
             decoded = (decoder(fullTime))
+            print (decoded)
             if decoded in range(1,12):
                 return "Frozen"
             elif decoded in range(12,18):
