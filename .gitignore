@@ -2,3 +2,12 @@
 test.py
 *.pyc
 *.json
+!names/names.json
+*.png
+!charGlyph/*.png
+!glypths/*.png
+!ahh/*.png
+!floor/*.png
+!winterfacePictures/*.png
+!test/*.png
+!times/*.png

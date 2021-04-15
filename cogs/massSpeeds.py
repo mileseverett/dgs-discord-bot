@@ -2,7 +2,6 @@ import math
 import random
 import numpy as np
 import os
-
 import discord
 from discord.ext import commands
 from discord.utils import get
@@ -14,7 +13,8 @@ class massSpeeds(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
-        self.messageID = None
+        self.messageID = 0000000000000
+        self.message = None
         self.teamMessages = []
         self.client = discord.Client()
 
@@ -139,7 +139,8 @@ class massSpeeds(commands.Cog):
         if "msActive" in settings.keys():
             if settings["msActive"] == False:
                 message = await ctx.send("React to this message to join the mass speeds session.")
-                self.messageID = (message)
+                self.messageID = (message.id)
+                self.message = message
                 await message.add_reaction("<a:EB:744967488751665303>")
                 settings["msActive"] = True
             elif settings["msActive"] == True:
@@ -163,7 +164,7 @@ class massSpeeds(commands.Cog):
         settings = jsonHandling.loadJSON(fname)
         if "msActive" in settings.keys():
             if settings["msActive"] == True:
-                await self.messageID.delete()
+                await self.message.delete()
                 settings["msActive"] = False
             elif settings["msActive"] == False:
                 await ctx.send("MS was not running.")
