@@ -139,7 +139,7 @@ class massSpeeds(commands.Cog):
         if "msActive" in settings.keys():
             if settings["msActive"] == False:
                 message = await ctx.send("React to this message to join the mass speeds session.")
-                self.messageID = (message)
+                self.messageID = message
                 self.message = message
                 await message.add_reaction("<a:EB:744967488751665303>")
                 settings["msActive"] = True
