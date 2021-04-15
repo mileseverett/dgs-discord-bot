@@ -252,8 +252,8 @@ class winterfaceReader(commands.Cog):
         
         return 1
 
-    @commands.command(name="highscore")
-    async def highscore(self, ctx, url):
+    @commands.command(name="hiscore")
+    async def hiscore(self, ctx, url):
         try:
             isValid = (self.is_url_image(url))
             if isValid == True:
