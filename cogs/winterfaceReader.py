@@ -172,6 +172,45 @@ class winterfaceReader(commands.Cog):
                 conn.close()
         return 1
     
+    @commands.command(name = "changeHiscoreName")
+    async def hiscoreName(self, ctx, previousName:str, newName:str):
+        '''
+        Add a new alias to the DB for a given hiscore name
+
+        @params
+        - previousName: current name in the DB
+        - newName: new name to set as the primary name in the DB
+        '''
+        conn = self.makeConn()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("select count(*) from DGS_Hiscores.rsn_association where hiscoreName = '{}'".format(str(previousName)))
+            checkPrior = cursor.fetchall()
+            if int(checkPrior[0][0]) <= 0:
+                await ctx.send("Name not found in the database to add an alias too, check your provided name.")
+            else:
+                cursor = conn.cursor()
+                cursor.execute("update DGS_Hiscores.rsn_association set hiscoreName = '{}' where hiscoreName = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("insert into DGS_Hiscores.rsn_association values ('{}', '{}')".format(str(newName), str(previousName)))
+                # --- Raw table --- #
+                cursor.execute("update DGS_Hiscores.submission_raw set playerOne = '{}' where playerOne = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerTwo = '{}' where playerTwo = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerThree = '{}' where playerThree = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerFour = '{}' where playerFour = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_raw set playerFive = '{}' where playerFive = '{}'".format(str(newName), str(previousName)))
+                # --- Accepted table --- #
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerOne = '{}' where playerOne = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerTwo = '{}' where playerTwo = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerThree = '{}' where playerThree = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerFour = '{}' where playerFour = '{}'".format(str(newName), str(previousName)))
+                cursor.execute("update DGS_Hiscores.submission_accepted set playerFive = '{}' where playerFive = '{}'".format(str(newName), str(previousName)))
+                conn.commit()
+                await ctx.send("Updated name to: " + str(newName))
+        finally:
+            if (conn.is_connected()):
+                conn.close()
+        return 1
+    
     @commands.command(name = "getAllAliases")
     async def getAlias(self, ctx, hiscoreName:str):
         conn = self.makeConn()
