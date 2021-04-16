@@ -827,6 +827,10 @@ class winterfaceReader(commands.Cog):
         for file in os.listdir("./character"):
             times.append(file)
 
+        times.sort(reverse=False)
+
+        print (times)
+
         for t in times:
             name = "Couldn't find name"
             fullTime = {}
