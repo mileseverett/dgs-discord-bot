@@ -31,6 +31,7 @@ class winterfaceReader(commands.Cog):
 
         self.prodDGSBotID = 722758078310776832
         self.testDGSBotID = 718483095262855280
+        createFolder("ahh")
 
     def makeConn(self):
         user = os.getenv('MYSQL_USER')
@@ -290,6 +291,7 @@ class winterfaceReader(commands.Cog):
                     im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
                     fname = "character/" + str(counter) + str(k) + ".png"
                     im.save(fname)
+                    counter += 1
 
                 for k,v in nonNamesCoordinates.items():
                     im = image.crop((v["x"], v["y"], v["x"] + v["width"], v["y"] + v["height"]))
