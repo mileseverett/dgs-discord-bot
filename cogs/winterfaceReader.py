@@ -231,6 +231,7 @@ class winterfaceReader(commands.Cog):
         await ctx.send(embed = embed)
     
     @commands.command(name = "acceptHiscores")
+    @commands.has_any_role("dgs hiscore mod")
     async def generateAdminHiscorePage(self, ctx):
         randInt = random.randint(1000, 100000000)
         random32 = ( ''.join(random.choice(string.ascii_lowercase) for i in range(32)) )
